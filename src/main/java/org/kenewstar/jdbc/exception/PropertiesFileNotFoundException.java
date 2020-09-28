@@ -3,6 +3,8 @@ package org.kenewstar.jdbc.exception;
 /**
  * properties属性文件未找到异常
  * @author kenewstar
+ * @date 2020-08-08
+ * @version 0.1
  */
 public class PropertiesFileNotFoundException extends RuntimeException{
 

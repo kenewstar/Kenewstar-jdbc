@@ -14,6 +14,8 @@ import java.util.*;
  * 该工具类，用于通过实体类上的注解
  * 获取数据表的相关信息(表名，列名，主键id)
  * @author kenewstar
+ * @date 2020-08-08
+ * @version 0.1
  */
 public class DataTableInfo {
     /**

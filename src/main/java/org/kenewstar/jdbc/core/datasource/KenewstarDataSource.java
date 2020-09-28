@@ -1,20 +1,28 @@
 package org.kenewstar.jdbc.core.datasource;
 
-import org.kenewstar.jdbc.exception.KenewstarDataSourceException;
 import org.kenewstar.jdbc.util.JdbcProperties;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.Map;
 
 /**
- * 存储jdbc相关连接信息
+ * 存储数据库连接信息
  * @author kenewstar
+ * @date 2020-08-08
+ * @version 0.1
  */
 public class KenewstarDataSource {
 
-    private static final String  DRIVER_CLASS_NAME = "driverClassName";
-    private static final String URL = "url";
-    private static final String USERNAME = "username";
-    private static final String PASSWORD = "password";
+    public static final String DRIVER_CLASS_NAME = "driverClassName";
+    public static final String URL = "url";
+    public static final String USERNAME = "username";
+    public static final String PASSWORD = "password";
+    /**
+     * 默认jdbc.properties的位置在classpath路径下
+     */
+    private static final String JDBC_PROP_PATH = "jdbc.properties";
     /**
      * jdbc驱动
      */
@@ -32,50 +40,61 @@ public class KenewstarDataSource {
      */
     private String password;
 
-    private KenewstarDataSource dataSource;
+    static {
+        //初始化properties文件
+        JdbcProperties.initProperties(JDBC_PROP_PATH);
+    }
     /**
      * 无参构造器
      */
-    public KenewstarDataSource(){ }
-
-    /**
-     * 全参构造器
-     * @param driverClassName 驱动
-     * @param url 连接
-     * @param username 用户名
-     * @param password 密码
-     */
-    public KenewstarDataSource(String driverClassName, String url, String username, String password) {
-        this.driverClassName = driverClassName;
-        this.url = url;
-        this.username = username;
-        this.password = password;
-
-    }
-
-    /**
-     * 通过设置properties属性文件的位置，设置数据源
-     * @param path properties文件位置
-     */
-    public void setKenewstarDataSource(String path){
-        //初始化properties文件
-        JdbcProperties.initProperties(path);
+    public KenewstarDataSource(){
         //从jdbc.properties文件中获取内容
         Map<String, String> dataSource = JdbcProperties.getPropKeyAndValue();
-
         //设置数据源的四个属性
-        this.setDriverClassName(dataSource.get(DRIVER_CLASS_NAME));
-        this.setUrl(dataSource.get(URL));
-        this.setUsername(dataSource.get(USERNAME));
-        this.setPassword(dataSource.get(PASSWORD));
-        //提供给dataSource属性，以便对外开放
-        this.dataSource = new KenewstarDataSource(driverClassName,url,username,password);
+        setDriverClassName((String) dataSource.get(DRIVER_CLASS_NAME));
+        setUrl((String) dataSource.get(URL));
+        setUsername((String) dataSource.get(USERNAME));
+        setPassword((String) dataSource.get(PASSWORD));
     }
 
+    //====================================================================//
 
-    public KenewstarDataSource getKenewstarDataSource(){
-        return dataSource;
+    /**
+     * 加载驱动
+     */
+    private void loadDriver(){
+        //加载驱动
+        try {
+            Class.forName(getDriverClassName());
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
     }
+
+    /**
+     * 获取数据库连接
+     * @return 返回连接
+     */
+    public Connection getConnection() {
+        //加载驱动
+        loadDriver();
+        //获取连接
+        Connection connection = null;
+        try {
+            connection = DriverManager.getConnection(
+                    getUrl(),
+                    getUsername(),
+                    getPassword()
+            );
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+        //返回连接
+        return connection;
+
+    }
+
+    //==========================================================================//
 
     /**
      * getter && setter 方法

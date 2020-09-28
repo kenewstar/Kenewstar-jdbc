@@ -5,6 +5,8 @@ import java.lang.annotation.*;
 /**
  * 对应实体类的类名
  * @author kenewstar
+ * @date 2020-08-08
+ * @version 0.1
  */
 @Documented
 @Target(ElementType.TYPE)

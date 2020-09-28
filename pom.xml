@@ -6,7 +6,7 @@
 
     <groupId>org.kenewstar.jdbc</groupId>
     <artifactId>kenewstar-jdbc</artifactId>
-    <version>0.1</version>
+    <version>0.2</version>
 
     <dependencies>
     <!--    mysql驱动    -->
@@ -21,6 +21,22 @@
             <version>RELEASE</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>c3p0</groupId>
+            <artifactId>c3p0</artifactId>
+            <version>0.9.1.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-dbcp2</artifactId>
+            <version>2.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid</artifactId>
+            <version>1.1.23</version>
+        </dependency>
+
 
     </dependencies>
 

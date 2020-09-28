@@ -5,6 +5,8 @@ import java.lang.annotation.*;
 /**
  * 映射列名
  * @author kenewstar
+ * @date 2020-08-08
+ * @version 0.1
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
