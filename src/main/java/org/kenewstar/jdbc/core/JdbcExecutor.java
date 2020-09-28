@@ -1,5 +1,7 @@
 package org.kenewstar.jdbc.core;
 
+import org.kenewstar.jdbc.transaction.Transaction;
+
 import java.util.List;
 
 /**
@@ -9,6 +11,11 @@ import java.util.List;
  * @version 0.2
  */
 public interface JdbcExecutor {
+    /**
+     * 获取事务
+     * @return 返回事务
+     */
+    Transaction getTransaction();
 
     /**
      * 更新操作

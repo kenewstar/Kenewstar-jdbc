@@ -14,32 +14,27 @@ public interface Transaction {
     /**
      * 获取连接
      * @return 返回连接
-     * @throws  SQLException 异常
      */
-    Connection getConnection() throws SQLException;
+    Connection getConnection();
 
     /**
      * 开启事务
-     * @throws SQLException 异常
      */
-    void begin() throws SQLException;
+    void begin();
 
     /**
      * 事务提交
-     * @throws SQLException 异常
      */
-    void commit() throws SQLException;
+    void commit();
 
     /**
      * 事务回滚
-     * @throws SQLException 异常
      */
-    void rollBack() throws SQLException;
+    void rollBack();
 
     /**
      * 关闭连接
-     * @throws SQLException 异常
      */
-    void close() throws SQLException;
+    void close();
 
 }

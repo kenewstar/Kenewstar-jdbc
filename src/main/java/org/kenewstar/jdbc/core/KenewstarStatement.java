@@ -2,6 +2,8 @@ package org.kenewstar.jdbc.core;
 
 import org.kenewstar.jdbc.core.datasource.ConnectionPool;
 import org.kenewstar.jdbc.core.datasource.KenewstarDataSource;
+import org.kenewstar.jdbc.transaction.JdbcTransaction;
+import org.kenewstar.jdbc.transaction.Transaction;
 
 import javax.sql.DataSource;
 import java.sql.*;
@@ -20,9 +22,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class KenewstarStatement {
     /**
-     * 声明连接
+     * 使用本地线程声明连接
      */
-    private Connection connection = null;
+    private static final ThreadLocal<Connection> CONNECTION = new ThreadLocal<>();
     /**
      * 声明预处理对象
      */
@@ -40,13 +42,18 @@ public class KenewstarStatement {
     /**
      * 从数据库连接池获取连接
      */
-    private Connection getConnection(){
+    public Connection getConnection(){
+        Connection conn = CONNECTION.get();
         try {
-            connection = DATASOURCE.getConnection();
+            if (conn == null){
+                conn = DATASOURCE.getConnection();
+            }
         } catch (SQLException e){
             e.printStackTrace();
+        }finally {
+            CONNECTION.set(conn);
         }
-        return connection;
+        return conn;
     }
     /**
      * 增删改执行器
@@ -56,11 +63,11 @@ public class KenewstarStatement {
      */
     public int preparedUpdateExecutor(String sql,Object...params){
         // 获取一个连接
-        connection = getConnection();
+        Connection conn = getConnection();
         int flag = 0;
         try {
             //执行sql预处理
-            ps =  connection.prepareStatement(sql);
+            ps =  conn.prepareStatement(sql);
             //传递参数
             int index = 0;
             for (Object param : params){
@@ -70,8 +77,12 @@ public class KenewstarStatement {
             flag = ps.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
-        }finally {
-            close(ps,connection);
+        } finally {
+            try {
+                ps.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
         return flag;
     }
@@ -84,12 +95,12 @@ public class KenewstarStatement {
      */
     public List<Map<String,Object>> preparedSelectExecutor(String sql, Object...params){
         // 获取一个连接
-        connection = getConnection();
+        Connection conn = getConnection();
         // 创建一个List<Map>对象封装返回结果
         List<Map<String,Object>> result = null;
         try {
             // 执行SQL预处理
-            ps = connection.prepareStatement(sql);
+            ps = conn.prepareStatement(sql);
             //传递参数
             int index = 0;
             for (Object param : params){
@@ -119,47 +130,32 @@ public class KenewstarStatement {
             e.printStackTrace();
         }finally {
             //关闭资源
-            close(ps,connection,rs);
+            close();
         }
         return result;
     }
 
     /**
      * 关闭资源
-     * @param ps
-     * @param conn
      */
-    public void close(PreparedStatement ps,Connection conn){
-        close(ps,conn,null);
-    }
-    /**
-     * 关闭资源
-     * @param ps
-     * @param conn
-     * @param rs
-     */
-    public void close(PreparedStatement ps,Connection conn,ResultSet rs){
+    public void close(){
+        Connection conn = CONNECTION.get();
         try {
             if ( ps != null){
                 ps.close();
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        try {
+            if (rs != null){
+                rs.close();
+            }
             if (conn != null){
                 conn.close();
             }
         } catch (SQLException e) {
             e.printStackTrace();
+        }finally {
+            CONNECTION.remove();
         }
-        try {
-            if (rs != null){
-                rs.close();
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+
 
     }
 

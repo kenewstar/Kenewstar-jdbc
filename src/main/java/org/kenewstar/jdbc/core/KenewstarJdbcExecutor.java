@@ -1,8 +1,11 @@
 package org.kenewstar.jdbc.core;
 
 import org.kenewstar.jdbc.exception.PageNumberIllegalException;
+import org.kenewstar.jdbc.transaction.JdbcTransaction;
+import org.kenewstar.jdbc.transaction.Transaction;
 import org.kenewstar.jdbc.util.DataTableInfo;
 import java.lang.reflect.Field;
+import java.sql.Connection;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -20,6 +23,15 @@ public class KenewstarJdbcExecutor implements JdbcExecutor{
 
     public KenewstarJdbcExecutor(){
         statement = new KenewstarStatement();
+    }
+
+    @Override
+    public Transaction getTransaction() {
+        // 获取连接
+        Connection conn = statement.getConnection();
+        // 创建事务控制类
+        // 返回事务
+        return new JdbcTransaction(conn);
     }
 
     @Override
