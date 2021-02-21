@@ -17,12 +17,11 @@ import java.util.logging.Logger;
  */
 public class KenewstarJdbcExecutor implements JdbcExecutor{
 
-    private final KenewstarStatement statement;
+    private static final KenewstarStatement statement = new KenewstarStatement();;
 
     private static final Logger log = Logger.getLogger("SQL");
 
     public KenewstarJdbcExecutor(){
-        statement = new KenewstarStatement();
     }
 
     @Override

@@ -43,7 +43,6 @@ public interface JdbcExecutor {
      * @param sql sql语句
      * @param entityClass 实体类类型
      * @param id id参数
-     * @param <T>
      * @return 返回查询结果对象
      */
     <T> T selectEntityById(String sql, Class<T> entityClass, Integer id);
@@ -51,7 +50,6 @@ public interface JdbcExecutor {
      * 查询所有
      * @param sql 查询所有的SQL语句
      * @param entityClass 类
-     * @param <T> 泛型
      * @return 返回查询结果集合
      */
     <T> List<T> selectAllEntity(String sql, Class<T> entityClass);
@@ -60,7 +58,6 @@ public interface JdbcExecutor {
      * @param sql SQL查询语句
      * @param entityClass 类
      * @param args 查询列的参数
-     * @param <T> 泛型
      * @return 返回查询结果集合
      */
     <T> List<T> selectListByColumns(String sql, Class<T> entityClass, Object... args);
@@ -93,7 +90,6 @@ public interface JdbcExecutor {
      * 根据Id查询数据记录
      * @param id id参数
      * @param entityClass 类类型
-     * @param <T> 泛型参数
      * @return 返回实体对象
      */
     <T> T selectById(Integer id, Class<T> entityClass);
@@ -127,7 +123,6 @@ public interface JdbcExecutor {
      * SQL ： select * from tableName order by column1 desc|asc,[column2 desc|asc]...
      * @param entityClass 查询数据表对应的类
      * @param sorts 排序条件集合
-     * @param <T> 泛型
      * @return 返回查询结果集合
      */
     <T> List<T> selectAll(Class<T> entityClass, List<Sort> sorts);

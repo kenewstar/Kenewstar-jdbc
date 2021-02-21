@@ -51,10 +51,10 @@ public class KenewstarDataSource {
         //从jdbc.properties文件中获取内容
         Map<String, String> dataSource = JdbcProperties.getPropKeyAndValue();
         //设置数据源的四个属性
-        setDriverClassName((String) dataSource.get(DRIVER_CLASS_NAME));
-        setUrl((String) dataSource.get(URL));
-        setUsername((String) dataSource.get(USERNAME));
-        setPassword((String) dataSource.get(PASSWORD));
+        setDriverClassName(dataSource.get(DRIVER_CLASS_NAME));
+        setUrl(dataSource.get(URL));
+        setUsername(dataSource.get(USERNAME));
+        setPassword(dataSource.get(PASSWORD));
     }
 
     //====================================================================//
@@ -86,8 +86,8 @@ public class KenewstarDataSource {
                     getUsername(),
                     getPassword()
             );
-        } catch (SQLException throwables) {
-            throwables.printStackTrace();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
         //返回连接
         return connection;

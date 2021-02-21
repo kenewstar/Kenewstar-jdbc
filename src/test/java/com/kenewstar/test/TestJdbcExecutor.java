@@ -57,13 +57,13 @@ public class TestJdbcExecutor {
     }
 
     @Test
-    @org.kenewstar.jdbc.annotation.Transaction
+    //@org.kenewstar.jdbc.annotation.Transaction
     public void test03(){
         Transaction transaction = jdbcExecutor.getTransaction();
         try {
             transaction.begin();
             int delete = jdbcExecutor.deleteById(19, User.class);
-            //System.out.println(1/0);
+            int i = 10/0;
             int delete2 = jdbcExecutor.deleteById(20, User.class);
             System.out.println(delete+delete2);
             transaction.commit();
