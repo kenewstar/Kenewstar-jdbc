@@ -17,7 +17,7 @@ import java.util.logging.Logger;
  */
 public class KenewstarJdbcExecutor implements JdbcExecutor{
 
-    private static final KenewstarStatement statement = new KenewstarStatement();;
+    protected static final KenewstarStatement statement = new KenewstarStatement();
 
     private static final Logger log = Logger.getLogger("SQL");
 
@@ -94,9 +94,8 @@ public class KenewstarJdbcExecutor implements JdbcExecutor{
     @Override
     public <T> List<T>  selectAllEntity(String sql, Class<T> entityClass){
         // 不给列参数，则相当于查询所有数据
-        List<T> list = selectListByColumns(sql, entityClass);
         // 返回所有数据集合
-        return list;
+        return selectListByColumns(sql, entityClass);
     }
 
 
@@ -120,7 +119,7 @@ public class KenewstarJdbcExecutor implements JdbcExecutor{
         Field[] fields = entityClass.getDeclaredFields();
         // 遍历所有结果
         int index = 0;
-        for (Map<String,Object> map: maps ) {
+        for (Map<String,Object> ignored : maps ) {
             // 创建一个对象，用于存储单条信息
             try {
                 t = entityClass.newInstance();
@@ -156,8 +155,7 @@ public class KenewstarJdbcExecutor implements JdbcExecutor{
         // 存放属性与属性值的映射
         List<Map<String,Object>> fieldNameAndValues = new ArrayList<>(maps.size());
         for (Map<String,Object> map : maps){
-            int index = 0;
-            Map<String,Object> mapField = new HashMap<>();
+            Map<String,Object> mapField = new HashMap<>(columnNames.size());
             for (String columnName : columnNames.keySet()){
                 // 遍历设置属性与属性值的对应关系
                 mapField.put(columnNames.get(columnName),map.get(columnName));
@@ -201,7 +199,7 @@ public class KenewstarJdbcExecutor implements JdbcExecutor{
         sql.append('(');
         int index=0;
         for (String columnName :columnNames.keySet()) {
-            sql.append(columnName+',');
+            sql.append(columnName).append(',');
             //通过列名获取属性名进行属性的匹配，将匹配的属性的值放入参数数组中
             params[index++] = mapFields.get(columnNames.get(columnName));
         }

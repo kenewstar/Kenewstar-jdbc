@@ -57,7 +57,6 @@ public class TestJdbcExecutor {
     }
 
     @Test
-    //@org.kenewstar.jdbc.annotation.Transaction
     public void test03(){
         Transaction transaction = jdbcExecutor.getTransaction();
         try {
