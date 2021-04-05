@@ -1,21 +1,16 @@
 package com.kenewstar.test;
 
-import com.mchange.v2.c3p0.ComboPooledDataSource;
 import org.junit.Before;
 import org.junit.Test;
 import org.kenewstar.jdbc.core.JdbcExecutor;
 import org.kenewstar.jdbc.core.KenewstarJdbcExecutor;
 import org.kenewstar.jdbc.core.KenewstarStatement;
-import org.kenewstar.jdbc.core.datasource.KenewstarDataSource;
 import org.kenewstar.jdbc.transaction.JdbcTransaction;
 import org.kenewstar.jdbc.transaction.Transaction;
-import org.kenewstar.jdbc.util.JdbcProperties;
 
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Map;
 
 public class TestJdbcExecutor {
 

@@ -1,9 +1,6 @@
 package org.kenewstar.jdbc.core;
 
 import org.kenewstar.jdbc.core.datasource.ConnectionPool;
-import org.kenewstar.jdbc.core.datasource.KenewstarDataSource;
-import org.kenewstar.jdbc.transaction.JdbcTransaction;
-import org.kenewstar.jdbc.transaction.Transaction;
 
 import javax.sql.DataSource;
 import java.sql.*;
@@ -11,7 +8,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  *

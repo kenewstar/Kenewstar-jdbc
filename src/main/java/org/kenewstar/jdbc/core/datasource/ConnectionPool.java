@@ -1,10 +1,14 @@
 package org.kenewstar.jdbc.core.datasource;
 
-import org.kenewstar.jdbc.core.datasource.knspool.KnsDataSource;
+import com.alibaba.druid.pool.DruidDataSource;
+import com.mchange.v2.c3p0.ComboPooledDataSource;
+import org.kenewstar.jdbc.pool.AbstractDataSource;
+import org.kenewstar.jdbc.pool.KnsDataSource;
 import org.kenewstar.jdbc.util.JdbcProperties;
 import org.kenewstar.jdbc.util.TypeConverter;
 
 import javax.sql.DataSource;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.Map;
@@ -23,21 +27,23 @@ public class ConnectionPool {
      */
     private static final Logger log = Logger.getLogger("connectionPool");
     /**
-     * 三种数据库连接池
+     * 数据库连接池
      */
-    private static final String C3P0 = "ComboPooledDataSource";
-    private static final String DBCP2 = "BasicDataSource";
-    private static final String DRUID = "DruidDataSource";
+    private static final String C3P0    = "ComboPooledDataSource";
+    private static final String DBCP2   = "BasicDataSource";
+    private static final String DRUID   = "DruidDataSource";
+    private static final String DEFAULT = "kns";
+
+    private static final String DRIVER  = "driverClassName";
+    private static final String URL     = "url";
+    private static final String USER    = "username";
+    private static final String PWD     = "password";
+    private static final String SET     = "set";
 
     /**
      * 声明数据库连接池接口
      */
     private DataSource dataSource;
-    /**
-     * 内部自定义的数据库连接
-     * (原生jdbc连接，非数据库连接池)
-     */
-    private KenewstarDataSource knsDataSource;
     /**
      * 默认jdbc.properties的位置在classpath路径下
      */
@@ -49,15 +55,17 @@ public class ConnectionPool {
     /**
      * 声明数据库连接池配置信息
      */
-    private static Map<String, String> propKeyAndValue = null;
+    private static final Map<String, String> PROP_KEY_AND_VALUE;
 
     static {
         // 初始化加载jdbc.properties配置文件
         JdbcProperties.initProperties(JDBC_PROP_PATH);
         // 获取数据库连接池配置信息
-        propKeyAndValue = JdbcProperties.getPropKeyAndValue();
+        PROP_KEY_AND_VALUE = JdbcProperties.getPropKeyAndValue();
 
-        log.info("初始化jdbc.properties配置文件信息");
+        log.info("init jdbc.properties config info ......");
+
+        log.info(PROP_KEY_AND_VALUE.toString());
 
     }
 
@@ -65,24 +73,20 @@ public class ConnectionPool {
      * 获取连接池对象(对外提供)
      * @return 返回一个连接池对象
      */
-    public DataSource getConnPool(){
+    public DataSource getConnPool() {
         // 获取数据库连接池的类型
-        String dsType = propKeyAndValue.get(TYPE);
+        String dsType = PROP_KEY_AND_VALUE.get(TYPE);
         // 通过反射实例化连接池对象
-        Class<?> type = null;
+        Class<?> type = KnsDataSource.class;
         try {
-            if (Objects.isNull(dsType)||"".equals(dsType)){
-                type = KenewstarDataSource.class;
-            }else {
-                // 获取类对象
+            if (Objects.nonNull(dsType) && !"".equals(dsType)) {
                 type = Class.forName(dsType);
             }
-            // 判断使用了哪种连接池
+            // 获取指定连接池
             switch (type.getSimpleName()) {
                 case C3P0:
                     // 判断数据库连接池是否是c3p0
                     dataSource = getC3p0DataSource(type);
-
                     break;
                 case DBCP2:
                     // 判断数据库连接池是否是dbcp2
@@ -94,15 +98,13 @@ public class ConnectionPool {
                     break;
                 default:
                     // 未使用上述连接池,则使用KnsDataSource
-                    dataSource = new KnsDataSource();
-                    break;
+                    dataSource = getDefaultDataSource();
             }
-            log.info("数据库连接池为："+dataSource.toString());
+            log.info("dataSource type ：" + dataSource);
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         return dataSource;
     }
 
@@ -116,48 +118,22 @@ public class ConnectionPool {
         try {
             // 创建一个对象
             c3p0 = pool.newInstance();
-            //======================================================================//
-            // 获取设置驱动的方法
-            Method method = pool.getMethod("setDriverClass", String.class);
-            method.invoke(c3p0,propKeyAndValue.get(KenewstarDataSource.DRIVER_CLASS_NAME));
-            // 获取设置url的方法
-            method = pool.getMethod("setJdbcUrl",String.class);
-            method.invoke(c3p0,propKeyAndValue.get(KenewstarDataSource.URL));
-            // 获取设置用户名的方法
-            method = pool.getMethod("setUser",String.class);
-            method.invoke(c3p0,propKeyAndValue.get(KenewstarDataSource.USERNAME));
-            // 获取设置密码的方法
-            method = pool.getMethod("setPassword",String.class);
-            method.invoke(c3p0,propKeyAndValue.get(KenewstarDataSource.PASSWORD));
-            //======================================================================//
-            // 设置c3p0连接池的一些其他属性
-            for (String propName: ConnectionPoolPropertiesName.C3P0_PROP_NAME){
-                String propValue = propKeyAndValue.get(propName);
-                // 判断属性配置文件中是否配置了该值
-                if (!Objects.isNull(propValue)&&!"".equals(propValue)){
-                    // 设置该属性，若没有值，则使用默认配置即可
-                    String methodName = "set"+propName.substring(0,1).toUpperCase()+propName.substring(1);
-                    // 反射调用该方法设置属性值
-                    // 判断参数是boolean/String/int
-                    // 对不同方法设置不同类型参数
-                    if (TypeConverter.isBoolean(propValue)){
-                        method = pool.getMethod(methodName,boolean.class);
-                        method.invoke(c3p0,TypeConverter.str2Boolean(propValue));
-                    }else if (TypeConverter.isInt(propValue)){
-                        method = pool.getMethod(methodName,int.class);
-                        method.invoke(c3p0,Integer.parseInt(propValue));
-                    }else {
-                        method = pool.getMethod(methodName,String.class);
-                        method.invoke(c3p0,propValue);
-                    }
+            // 设置连接信息
+            Method driver = pool.getMethod("setDriverClass", String.class);
+            driver.invoke(c3p0, PROP_KEY_AND_VALUE.get(DRIVER));
+            Method url = pool.getMethod("setJdbcUrl", String.class);
+            url.invoke(c3p0, PROP_KEY_AND_VALUE.get(URL));
+            Method user = pool.getMethod("setUser", String.class);
+            user.invoke(c3p0, PROP_KEY_AND_VALUE.get(USER));
+            Method pwd = pool.getMethod("setPassword", String.class);
+            pwd.invoke(c3p0, PROP_KEY_AND_VALUE.get(PWD));
 
-                }
-            }
+            // 设置c3p0连接池的一些其他属性
+            setConnPoolProperties(pool, c3p0);
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-        // 返回 DataSource
         return (DataSource) c3p0;
     }
 
@@ -194,34 +170,63 @@ public class ConnectionPool {
             druid = pool.newInstance();
 
             // 设置druid连接池的属性
-            setConnPoolProperties(pool,druid);
+            setConnPoolProperties(pool, druid);
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-        // 返回 DataSource
         return (DataSource) druid;
     }
 
+    private DataSource getDefaultDataSource() {
+        KnsDataSource dataSource = new KnsDataSource();
+        // 设置连接属性
+        dataSource.setDriverClass(PROP_KEY_AND_VALUE.get(DRIVER));
+        dataSource.setJdbcUrl(PROP_KEY_AND_VALUE.get(URL));
+        dataSource.setUsername(PROP_KEY_AND_VALUE.get(USER));
+        dataSource.setPassword(PROP_KEY_AND_VALUE.get(PWD));
+
+        String initialSize = PROP_KEY_AND_VALUE.get("initialSize");
+        if (Objects.nonNull(initialSize)) {
+            dataSource.setInitialSize(Integer.parseInt(initialSize));
+        }
+
+        String waitTime = PROP_KEY_AND_VALUE.get("waitTime");
+        if (Objects.nonNull(waitTime)) {
+            dataSource.setWaitTime(Long.parseLong(waitTime));
+        }
+
+        String maxSize = PROP_KEY_AND_VALUE.get("maxSize");
+        if (Objects.nonNull(maxSize)) {
+            dataSource.setMaxSize(Integer.parseInt(maxSize));
+        }
+
+        String minIdle = PROP_KEY_AND_VALUE.get("minIdle");
+        if (Objects.nonNull(minIdle)) {
+            dataSource.setMinIdle(Integer.parseInt(minIdle));
+        }
+
+        return dataSource;
+    }
     /**
      * 设置数据库连接池的属性
      * @param pool 连接池的类类型
      * @param connPool 连接池对象
      * @throws Exception 抛出的异常
      */
-    private void setConnPoolProperties(Class<?> pool,Object connPool) throws Exception{
+    private void setConnPoolProperties(Class<?> pool, Object connPool) throws Exception {
         // 获取该类下的所有public方法
         Method[] methods = pool.getMethods();
-        for (Method m:methods) {
+        for (Method m : methods) {
             Type[] types = m.getGenericParameterTypes();
             // 获取方法名
             String methodName = m.getName();
             // 获取set方法对应的属性名
-            String fieldName = methodName.substring(3, 4).toLowerCase()+methodName.substring(4);
+            String fieldName = getPropNameBySetMethod(m);
             // 获取属性对应的值
-            String propValue = propKeyAndValue.get(fieldName);
+            String propValue = PROP_KEY_AND_VALUE.get(fieldName);
             // 判断值是否为null或者为空串
-            if (Objects.isNull(propValue)||"".equals(propValue)){
+            if (Objects.isNull(propValue) || "".equals(propValue)){
                 // 是，则跳出本次循环
                 continue;
             }
@@ -230,27 +235,42 @@ public class ConnectionPool {
                 if (types[0].equals(String.class)){
                     // 参数为String类型
                     m = pool.getMethod(methodName, String.class);
-                    m.invoke(connPool,propValue);
+                    m.invoke(connPool, propValue);
                 }else if (types[0].equals(int.class)){
                     // 参数为int类型
                     m = pool.getMethod(methodName, int.class);
-                    m.invoke(connPool,Integer.parseInt(propValue));
+                    m.invoke(connPool, Integer.parseInt(propValue));
                 }else if (types[0].equals(long.class)){
                     // 参数为long类型
                     m = pool.getMethod(methodName, long.class);
-                    m.invoke(connPool,Long.parseLong(propValue));
+                    m.invoke(connPool, Long.parseLong(propValue));
                 }else if (types[0].equals(Boolean.class)){
                     // 参数为Boolean类型
                     m = pool.getMethod(methodName, Boolean.class);
-                    m.invoke(connPool,TypeConverter.str2Boolean(propValue));
+                    m.invoke(connPool, TypeConverter.str2Boolean(propValue));
                 }else if(types[0].equals(boolean.class)){
                     // 参数为boolean类型
                     m = pool.getMethod(methodName, boolean.class);
-                    m.invoke(connPool,TypeConverter.str2Boolean(propValue));
+                    m.invoke(connPool, TypeConverter.str2Boolean(propValue));
                 }
             }
 
         }
+    }
+
+    /**
+     * 根据set方法获取属性名
+     * @param method 反射方法
+     * @return propName
+     */
+    private String getPropNameBySetMethod(Method method) {
+        String methodName = method.getName();
+        String propName = null;
+        if (methodName.startsWith(SET)) {
+            propName = methodName.substring(3,4).toLowerCase() +
+                       methodName.substring(4);
+        }
+        return propName;
     }
 
 }

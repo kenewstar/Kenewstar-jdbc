@@ -5,7 +5,6 @@ import com.mchange.v2.c3p0.ComboPooledDataSource;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.junit.Test;
 import org.kenewstar.jdbc.core.datasource.ConnectionPool;
-import org.kenewstar.jdbc.core.datasource.knspool.KnsDataSource;
 import org.kenewstar.jdbc.util.TypeConverter;
 
 import javax.sql.DataSource;
@@ -54,12 +53,6 @@ public class TestTypeConverter {
     }
     @Test
     public void test4() throws SQLException {
-        KnsDataSource dataSource = new KnsDataSource();
-//        DataSource dataSource = new ConnectionPool().getConnPool();
-        System.out.println(dataSource.getConnection());
-        System.out.println(dataSource.getConnection());
-        System.out.println(dataSource.getConnection());
-        System.out.println(dataSource.getConnection());
-        dataSource.getConnection().close();
+
     }
 }

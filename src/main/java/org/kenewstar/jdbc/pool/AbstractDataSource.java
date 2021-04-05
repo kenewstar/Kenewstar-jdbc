@@ -62,19 +62,19 @@ public abstract class AbstractDataSource implements DataSource {
         this.driverClass = driverClass;
     }
 
-    public Integer getMaxSize() {
+    public int getMaxSize() {
         return maxSize;
     }
 
-    public void setMaxSize(Integer maxSize) {
+    public void setMaxSize(int maxSize) {
         this.maxSize = maxSize;
     }
 
-    public Integer getInitialSize() {
+    public int getInitialSize() {
         return initialSize;
     }
 
-    public void setInitialSize(Integer initialSize) {
+    public void setInitialSize(int initialSize) {
         this.initialSize = initialSize;
     }
 
