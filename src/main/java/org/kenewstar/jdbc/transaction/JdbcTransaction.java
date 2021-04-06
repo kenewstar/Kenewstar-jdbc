@@ -38,6 +38,7 @@ public class JdbcTransaction implements Transaction{
             if (connection != null && !connection.getAutoCommit()){
                 // 连接不为空，且自动提交被关闭
                 connection.commit();
+                connection.close();
             }
         }catch (SQLException e){
             e.printStackTrace();
@@ -50,6 +51,7 @@ public class JdbcTransaction implements Transaction{
             if (connection != null && !connection.getAutoCommit()){
                 // 连接不为空，且自动提交被关闭
                 connection.rollback();
+                connection.close();
             }
         }catch (SQLException e){
             e.printStackTrace();

@@ -18,22 +18,13 @@ import java.util.Map;
  */
 public class KenewstarStatement {
     /**
+     * 获取数据库连接池
+     */
+    private static final DataSource DATASOURCE = new ConnectionPool().getConnPool();
+    /**
      * 使用本地线程声明连接
      */
     private static final ThreadLocal<Connection> CONNECTION = new ThreadLocal<>();
-    /**
-     * 声明预处理对象
-     */
-    private PreparedStatement ps = null;
-    /**
-     * 声明返回结果集对象
-     */
-    private ResultSet rs = null;
-    /**
-     * 获取数据库连接池
-     */
-    private static final DataSource DATASOURCE =
-            new ConnectionPool().getConnPool();
 
     /**
      * 从数据库连接池获取连接
@@ -57,7 +48,8 @@ public class KenewstarStatement {
      * @param params 可变参数
      * @return 返回执行影响的行数
      */
-    public int preparedUpdateExecutor(String sql,Object...params){
+    public int preparedUpdateExecutor(String sql, Object...params) {
+        PreparedStatement ps = null;
         // 获取一个连接
         Connection conn = getConnection();
         int flag = 0;
@@ -66,19 +58,15 @@ public class KenewstarStatement {
             ps =  conn.prepareStatement(sql);
             //传递参数
             int index = 0;
-            for (Object param : params){
-                ps.setObject(++index,param);
+            for (Object param : params) {
+                ps.setObject(++ index, param);
             }
             //执行sql
             flag = ps.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         } finally {
-            try {
-                ps.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+            close(null, ps);
         }
         return flag;
     }
@@ -89,7 +77,9 @@ public class KenewstarStatement {
      * @param params 查询条件参数
      * @return 返回查询结果集
      */
-    public List<Map<String,Object>> preparedSelectExecutor(String sql, Object...params){
+    public List<Map<String,Object>> preparedSelectExecutor(String sql, Object...params) {
+        PreparedStatement ps = null;
+        ResultSet rs = null;
         // 获取一个连接
         Connection conn = getConnection();
         // 创建一个List<Map>对象封装返回结果
@@ -100,24 +90,24 @@ public class KenewstarStatement {
             //传递参数
             int index = 0;
             for (Object param : params){
-                ps.setObject(++index,param);
+                ps.setObject(++ index, param);
             }
             // 执行查询
             rs = ps.executeQuery();
             // 取出结果集
-            index = 1;
             // 实例化返回结果对象
-            result = new ArrayList<Map<String, Object>>(rs.getRow());
-            Map<String,Object> map = null;
+            result = new ArrayList<>(rs.getRow());
+            Map<String,Object> map;
             // 遍历结果集，将结果集封装到List中
-            while (rs.next()){
-                map = new HashMap<>();
+            int columnCount = rs.getMetaData().getColumnCount();
+            while (rs.next()) {
+                map = new HashMap<>(columnCount);
                 // 获取结果集对象元数据
                 ResultSetMetaData metaData = rs.getMetaData();
                 // 遍历每一行的属性
-                for (int i=1;i<=metaData.getColumnCount();i++){
+                for (int i = 1;i <= columnCount; i++){
                     String columnName = metaData.getColumnLabel(i);
-                    map.put(columnName,rs.getObject(columnName));
+                    map.put(columnName, rs.getObject(columnName));
                 }
                 // 将map存入List中
                 result.add(map);
@@ -126,7 +116,7 @@ public class KenewstarStatement {
             e.printStackTrace();
         }finally {
             //关闭资源
-            close();
+            close(rs, ps);
         }
         return result;
     }
@@ -134,24 +124,27 @@ public class KenewstarStatement {
     /**
      * 关闭资源
      */
-    public void close(){
+    public void close(ResultSet rs, PreparedStatement ps) {
         Connection conn = CONNECTION.get();
         try {
-            if ( ps != null){
+            if (ps != null) {
                 ps.close();
             }
-            if (rs != null){
+            if (rs != null) {
                 rs.close();
             }
-            if (conn != null){
-                conn.close();
+            if (conn != null) {
+                // 事物是否自动提交
+                if (conn.getAutoCommit()) {
+                    conn.close();
+                }
             }
+
         } catch (SQLException e) {
             e.printStackTrace();
         }finally {
             CONNECTION.remove();
         }
-
 
     }
 

@@ -195,21 +195,21 @@ public class KenewstarJdbcExecutor implements JdbcExecutor{
 
         // insert into tableName(columnName,columnName) values(?,?)
         //===============构建SQL语句===============//
-        StringBuilder sql = new StringBuilder("insert into "+tableName);
+        StringBuilder sql = new StringBuilder("insert into " + tableName);
         sql.append('(');
         int index=0;
-        for (String columnName :columnNames.keySet()) {
+        int columnSize = columnNames.size();
+        StringBuilder valSql = new StringBuilder(" values(");
+        for (String columnName : columnNames.keySet()) {
             sql.append(columnName).append(',');
             //通过列名获取属性名进行属性的匹配，将匹配的属性的值放入参数数组中
             params[index++] = mapFields.get(columnNames.get(columnName));
+
+            valSql.append("?,");
         }
+        valSql.setCharAt(valSql.length()-1,')');
         sql.setCharAt(sql.length()-1,')');
-        sql.append(" values(");
-        for(int i=0;i<columnNames.size();i++){
-            sql.append("?,");
-        }
-        sql.setCharAt(sql.length()-1,')');
-        //========================================//
+        sql.append(valSql);
 
         // 执行SQL
         int insert = insertEntity(sql.toString(), params);
@@ -228,8 +228,8 @@ public class KenewstarJdbcExecutor implements JdbcExecutor{
         String idName = DataTableInfo.getIdName(entityClass);
         //============构建SQL语句=================//
         // example : delete from tableName where id = ?
-        StringBuilder sql = new StringBuilder("delete from "+tableName);
-        sql.append(" where "+idName+" = ?");
+        StringBuilder sql = new StringBuilder("delete from " + tableName);
+        sql.append(" where " + idName + " = ?");
         //======================================//
         // 执行SQL语句
         int delete = deleteEntity(sql.toString(), id);
