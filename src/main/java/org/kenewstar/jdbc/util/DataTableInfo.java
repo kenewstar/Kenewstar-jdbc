@@ -80,7 +80,7 @@ public class DataTableInfo {
                     // 若为空串，则将属性名作为列名
                     columnName = field.getName();
                 }
-                //将属性名与列明放入Map中
+                //将属性名与列名放入Map中
                 columnAndField.put(columnName,field.getName());
             }
         }
@@ -162,6 +162,25 @@ public class DataTableInfo {
         }
         // 返回属性与列的映射集合
         return fieldNameAndColumnName;
+    }
+
+    /**
+     * 根据反射Field获取列名
+     * @param field 反射属性对象
+     * @return 列名
+     */
+    public static String getColumnNameByField(Field field) {
+        boolean annotationPresent = field.isAnnotationPresent(Column.class);
+        String columnName = "";
+        if (annotationPresent) {
+            Column column = field.getAnnotation(Column.class);
+            columnName = column.columnName();
+        }
+        if (Objects.equals(columnName, "")) {
+            columnName = field.getName();
+        }
+
+        return columnName;
     }
 
 

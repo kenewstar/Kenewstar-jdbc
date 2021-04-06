@@ -1,5 +1,6 @@
 package org.kenewstar.jdbc.core;
 
+import org.kenewstar.jdbc.annotation.Column;
 import org.kenewstar.jdbc.exception.PageNumberIllegalException;
 import org.kenewstar.jdbc.transaction.JdbcTransaction;
 import org.kenewstar.jdbc.transaction.Transaction;
@@ -53,7 +54,7 @@ public class KenewstarJdbcExecutor implements JdbcExecutor{
     public <T> T selectEntityById(String sql, Class<T> entityClass, Integer id){
         List<Map<String, Object>> maps = statement.preparedSelectExecutor(sql,id);
         // 查询结果为空
-        if (maps.size()==0){
+        if (maps.size() == 0){
             return null;
         }
         // 获取所有列信息
@@ -69,10 +70,10 @@ public class KenewstarJdbcExecutor implements JdbcExecutor{
         }
         // 存放属性与属性值的映射
         Map<String,Object> fieldNameAndValue = new HashMap<>();
-        for (String columnName : columnNames.keySet()){
+        for (String columnName : columnNames.keySet()) {
             // 遍历设置属性与属性值的对应关系
             fieldNameAndValue.put(columnNames.get(columnName),
-                    maps.get(0).get(columnName) );
+                                  maps.get(0).get(columnName) );
         }
 
         for (Field field : fields) {
@@ -343,7 +344,7 @@ public class KenewstarJdbcExecutor implements JdbcExecutor{
         String idName = DataTableInfo.getIdName(entityClass);
 
         // 构建SQL
-        String sql = "select count("+idName+") count from "+tableName;
+        String sql = "select count(" + idName + ") count from " + tableName;
 
         // 执行SQL
         List<Map<String, Object>> maps = statement.preparedSelectExecutor(sql);
@@ -351,12 +352,54 @@ public class KenewstarJdbcExecutor implements JdbcExecutor{
         // 打印SQL语句
         log.info("Executed SQL ===> "+sql);
         // 获取数量
-        if (maps.size()==0){
-            return 0;
-        }else {
+        if (maps.size() == 0) {
+             return 0;
+        } else {
              return (long) maps.get(0).get("count");
         }
 
+    }
+
+    @Override
+    public long count(Object obj) {
+        // 获取class
+        Class<?> entityClass = obj.getClass();
+        // 获取表名
+        String tableName = DataTableInfo.getTableName(entityClass);
+        // 获取列名
+        Map<String, String> columnNames = DataTableInfo.getColumnNames(entityClass);
+        // 参数
+        Object[] params = new Object[columnNames.size()];
+        // select count(*) from tableName where columnName=? and ....
+        StringBuilder sql = new StringBuilder("select count(*) count from ");
+        sql.append(tableName);
+        sql.append(" where 1=1 ");
+        Field[] fields = entityClass.getDeclaredFields();
+        int index = 0;
+        for (Field field : fields) {
+            Object o = null;
+            try {
+                field.setAccessible(true);
+                o = field.get(obj);
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+            String columnName = DataTableInfo.getColumnNameByField(field);
+            if (Objects.nonNull(o) && !Objects.equals(columnName, "")) {
+                sql.append("and ")
+                   .append(columnName)
+                   .append("=? ");
+                params[index ++] = o;
+            }
+        }
+        Object[] paramsArray = Arrays.copyOf(params, index);
+
+        List<Map<String, Object>> maps = statement.preparedSelectExecutor(sql.toString(), paramsArray);
+
+        // 打印SQL语句
+        log.info("Executed SQL ===> "+sql.toString());
+
+        return (long) maps.get(0).get("count");
     }
 
     //================排序和分页==============================//

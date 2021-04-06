@@ -112,6 +112,15 @@ public interface JdbcExecutor {
      */
     long count(Class<?> entityClass);
 
+    /**
+     * 根据条件统计记录数
+     * 实体对象中不为空的属性将作为查询条件
+     * 条件为 and 查询
+     * @param obj 实体对象
+     * @return 返回数据记录数
+     */
+    long count(Object obj);
+
 
     //================排序和分页 START=============================//
 

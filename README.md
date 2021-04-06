@@ -5,7 +5,7 @@ date : 2020-08-08
 ###### 1) 封装基本CURD操作
 
 ## kenewstar-jdbc-0.2
-date : 2020-08-15
+date : 2020-09-28
 ###### 1) 集成数据库连接池
 
 ## kenewstar-jdbc-0.3
