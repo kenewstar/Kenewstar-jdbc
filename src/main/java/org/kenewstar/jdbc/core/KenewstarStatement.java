@@ -28,6 +28,7 @@ public class KenewstarStatement {
 
     /**
      * 从数据库连接池获取连接
+     * @return conn
      */
     public Connection getConnection(){
         Connection conn = CONNECTION.get();
@@ -123,6 +124,8 @@ public class KenewstarStatement {
 
     /**
      * 关闭资源
+     * @param rs resultSet
+     * @param ps preparedStatement
      */
     public void close(ResultSet rs, PreparedStatement ps) {
         Connection conn = CONNECTION.get();

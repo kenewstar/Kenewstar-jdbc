@@ -15,7 +15,7 @@ public @interface Table {
 
     /**
      * 对应数据表的名称
-     * @return
+     * @return 表名
      */
     String tableName() default "";
 

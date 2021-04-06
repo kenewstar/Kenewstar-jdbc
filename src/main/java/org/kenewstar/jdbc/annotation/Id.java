@@ -15,7 +15,7 @@ import java.lang.annotation.*;
 public @interface Id {
     /**
      * 数据表主键的名称
-     * @return
+     * @return id名称
      */
     String value() default "";
 }

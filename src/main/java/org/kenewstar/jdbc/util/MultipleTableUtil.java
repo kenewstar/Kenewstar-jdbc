@@ -13,8 +13,8 @@ public class MultipleTableUtil {
 
     /**
      * 获取表名
-     * @param clz
-     * @return
+     * @param clz 表的实体类
+     * @return 表名
      */
     public static String getTableName(Class<?> clz) {
         Table table = clz.getAnnotation(Table.class);

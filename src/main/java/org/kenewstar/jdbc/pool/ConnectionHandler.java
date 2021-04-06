@@ -39,6 +39,8 @@ public class ConnectionHandler {
 
         /**
          * 释放连接
+         * @param proxy 代理对象
+         * @throws SQLException sql异常
          */
         public void close(Object proxy) throws SQLException {
             synchronized (knsDataSource) {
@@ -53,7 +55,7 @@ public class ConnectionHandler {
 
         /**
          * 真实关闭
-         * @throws SQLException
+         * @throws SQLException sql异常
          */
         public void directClose() throws SQLException {
             if (!connection.isClosed()) {

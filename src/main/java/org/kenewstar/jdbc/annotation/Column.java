@@ -14,7 +14,7 @@ import java.lang.annotation.*;
 public @interface Column {
     /**
      * 对应数据表列的名称
-     * @return
+     * @return 列名
      */
     String columnName() default "";
 

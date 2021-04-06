@@ -1,14 +1,10 @@
 package org.kenewstar.jdbc.core.datasource;
 
-import com.alibaba.druid.pool.DruidDataSource;
-import com.mchange.v2.c3p0.ComboPooledDataSource;
-import org.kenewstar.jdbc.pool.AbstractDataSource;
 import org.kenewstar.jdbc.pool.KnsDataSource;
 import org.kenewstar.jdbc.util.JdbcProperties;
 import org.kenewstar.jdbc.util.TypeConverter;
 
 import javax.sql.DataSource;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.Map;

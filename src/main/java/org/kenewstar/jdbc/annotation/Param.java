@@ -14,7 +14,7 @@ import java.lang.annotation.*;
 public @interface Param {
     /**
      * value值即为传递参数的名称
-     * @return
+     * @return 参数名称
      */
     String name() ;
 }
