@@ -171,8 +171,8 @@ public class KenewstarJdbcExecutor implements JdbcExecutor{
 
 
     @Override
-    public int insert(Object obj){
-        Class<?> entityClass = obj.getClass();
+    public int insert(Object entity){
+        Class<?> entityClass = entity.getClass();
         // 获取表名
         String tableName = DataTableInfo.getTableName(entityClass);
         // 获取所有列名
@@ -185,7 +185,7 @@ public class KenewstarJdbcExecutor implements JdbcExecutor{
         for (Field field:fields){
             field.setAccessible(true);
             try {
-                mapFields.put(field.getName(),field.get(obj));
+                mapFields.put(field.getName(),field.get(entity));
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
             }
@@ -242,8 +242,8 @@ public class KenewstarJdbcExecutor implements JdbcExecutor{
 
 
     @Override
-    public int updateById(Object obj){
-        Class<?> entityClass = obj.getClass();
+    public int updateById(Object entity){
+        Class<?> entityClass = entity.getClass();
         // 获取表名
         String tableName = DataTableInfo.getTableName(entityClass);
         // 获取id名
@@ -259,7 +259,7 @@ public class KenewstarJdbcExecutor implements JdbcExecutor{
         for (Field field:fields){
             field.setAccessible(true);
             try {
-                mapFields.put(field.getName(),field.get(obj));
+                mapFields.put(field.getName(),field.get(entity));
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
             }
@@ -361,9 +361,9 @@ public class KenewstarJdbcExecutor implements JdbcExecutor{
     }
 
     @Override
-    public long count(Object obj) {
+    public long count(Object entity) {
         // 获取class
-        Class<?> entityClass = obj.getClass();
+        Class<?> entityClass = entity.getClass();
         // 获取表名
         String tableName = DataTableInfo.getTableName(entityClass);
         // 获取列名
@@ -380,7 +380,7 @@ public class KenewstarJdbcExecutor implements JdbcExecutor{
             Object o = null;
             try {
                 field.setAccessible(true);
-                o = field.get(obj);
+                o = field.get(entity);
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
             }
@@ -496,5 +496,55 @@ public class KenewstarJdbcExecutor implements JdbcExecutor{
 
     //======================================================//
 
+
+    @Override
+    public int updateByIdSelective(Object entity) {
+        Class<?> entityClass = entity.getClass();
+
+        String tableName = DataTableInfo.getTableName(entityClass);
+        Map<String, String> columnNames = DataTableInfo.getColumnNames(entityClass);
+        // id列名
+        String idName = DataTableInfo.getIdName(entityClass);
+        // id属性名
+        String idFieldName = columnNames.get(idName);
+        Object idValue = null;
+        // 参数
+        Object[] params = new Object[columnNames.size()];
+
+        StringBuilder sql = new StringBuilder("update ");
+        sql.append(tableName)
+           .append(" set ");
+        Field[] fields = entityClass.getDeclaredFields();
+        int index = 0;
+        for (Field field : fields) {
+            field.setAccessible(true);
+            Object o;
+            String columnName = DataTableInfo.getColumnNameByField(field);
+            try {
+                o = field.get(entity);
+                if (Objects.nonNull(o) && !Objects.equals(idFieldName, field.getName())) {
+                    sql.append(columnName)
+                       .append("=? ");
+                    params[index ++] = o;
+                }
+                if (Objects.equals(idFieldName, field.getName())) {
+                    idValue = field.get(entity);
+                }
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        }
+        if (index == 0) {
+            return 0;
+        }
+        sql.append("where ").append(idName).append("=?");
+        params[index ++] = idValue;
+
+        Object[] paramsArray = Arrays.copyOf(params, index);
+        // 打印SQL语句
+        log.info("Executed SQL ===> "+sql.toString());
+
+        return updateEntity(sql.toString(), paramsArray);
+    }
 
 }

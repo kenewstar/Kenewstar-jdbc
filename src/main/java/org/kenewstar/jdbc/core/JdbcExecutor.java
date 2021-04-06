@@ -23,14 +23,14 @@ public interface JdbcExecutor {
      * @param args 执行参数
      * @return 返回影响行数
      */
-    int updateEntity(String sql,Object...args);
+    int updateEntity(String sql, Object...args);
     /**
      * 插入操作
      * @param sql 执行语句
      * @param args 执行参数
      * @return 返回影响行数
      */
-    int insertEntity(String sql,Object...args);
+    int insertEntity(String sql, Object...args);
     /**
      * 删除操作
      * @param sql 执行语句
@@ -66,10 +66,10 @@ public interface JdbcExecutor {
 
     /**
      * 将一个对象数据插入到数据库中
-     * @param obj 插入数据表中的对象参数
+     * @param entity 插入数据表中的对象参数
      * @return 返回影响的行数
      */
-    int insert(Object obj);
+    int insert(Object entity);
 
     /**
      * 根据id进行删除数据表记录
@@ -81,10 +81,10 @@ public interface JdbcExecutor {
 
     /**
      * 根据id更新数据表记录
-     * @param obj 更新的对象参数
+     * @param entity 更新的对象参数
      * @return 返回影响的行数
      */
-    int updateById(Object obj);
+    int updateById(Object entity);
 
     /**
      * 根据Id查询数据记录
@@ -116,10 +116,10 @@ public interface JdbcExecutor {
      * 根据条件统计记录数
      * 实体对象中不为空的属性将作为查询条件
      * 条件为 and 查询
-     * @param obj 实体对象
+     * @param entity 实体对象
      * @return 返回数据记录数
      */
-    long count(Object obj);
+    long count(Object entity);
 
 
     //================排序和分页 START=============================//
@@ -147,6 +147,14 @@ public interface JdbcExecutor {
     <T> Page<T> selectAll(Class<T> entityClass, PageCondition condition);
 
     //================排序和分页 END==============================//
+
+    /**
+     * 根据主键更新
+     * entity对象属性不为空的字段进行更新
+     * @param entity 更新属性
+     * @return 1
+     */
+    int updateByIdSelective(Object entity);
 
 
 
