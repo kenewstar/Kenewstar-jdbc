@@ -229,7 +229,7 @@ public class KenewstarJdbcExecutor implements JdbcExecutor{
         //============构建SQL语句=================//
         // example : delete from tableName where id = ?
         StringBuilder sql = new StringBuilder("delete from " + tableName);
-        sql.append(" where " + idName + " = ?");
+        sql.append(" where ").append(idName).append(" = ?");
         //======================================//
         // 执行SQL语句
         int delete = deleteEntity(sql.toString(), id);
@@ -265,24 +265,25 @@ public class KenewstarJdbcExecutor implements JdbcExecutor{
         }
         //===============构建SQL语句并加入参数====================//
         // example : update tableName set columnName=?,columnName=? where id=?
-        StringBuilder sql = new StringBuilder("update "+tableName+" set ");
+        StringBuilder sql = new StringBuilder("update " + tableName + " set ");
         // 遍历所有列名
         int index = 0;
         for (String columnName:columnNames.keySet()) {
             // 判断该列是否是id
-            if (columnName.equals(idName)){
+            if (columnName.equals(idName)) {
                 // 列名中有一个是id名
-                params[columnNames.size()-1]=mapFields.get(columnNames.get(columnName));
+                params[columnNames.size() - 1] = mapFields.get(columnNames.get(columnName));
             }else {
-                sql.append(columnName+"=?,");
+                sql.append(columnName).append("=?,");
                 // 列名不是id名
                 params[index++]=mapFields.get(columnNames.get(columnName));
             }
         }
+        System.out.println(Arrays.toString(params));
         // 去除最后一个逗号
         sql.setCharAt(sql.length()-1,' ');
         // 连接id查询条件
-        sql.append("where "+idName+"=?");
+        sql.append("where ").append(idName).append("=?");
         // 执行SQL语句
         int update = updateEntity(sql.toString(),params);
         // 打印SQL语句
@@ -303,9 +304,9 @@ public class KenewstarJdbcExecutor implements JdbcExecutor{
 
         //==============构建SQL语句======================//
         // example : select * from tableName where id=?
-        StringBuilder sql = new StringBuilder("select * from "+tableName);
-        sql.append(" where "+idName+"=?");
-        //=============================================//
+        StringBuilder sql = new StringBuilder("select * from " + tableName);
+        sql.append(" where ").append(idName).append("=?");
+
         // 执行SQL语句
         T t = selectEntityById(sql.toString(), entityClass, id);
         // 打印SQL语句
