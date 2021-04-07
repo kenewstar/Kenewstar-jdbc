@@ -1,35 +1,56 @@
 package org.kenewstar.jdbc.core;
 
+import org.kenewstar.jdbc.core.datasource.ConnectionPool;
+
+import javax.sql.DataSource;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.*;
 
 /**
  *
  * 处理sql语句
  * @author kenewstar
+ * @date 2020-08-08
+ * @version 1.0
  */
 public class KenewstarStatement {
+
     /**
-     * 声明连接
+     * 获取数据库连接池
      */
-    private Connection connection;
+    private final DataSource dataSource;
     /**
-     * 声明预处理对象
+     * 使用本地线程声明连接
      */
-    private PreparedStatement ps;
+    private final ThreadLocal<Connection> connection;
+
+    public KenewstarStatement() {
+        dataSource = new ConnectionPool().getConnPool();
+        connection = new ThreadLocal<>();
+    }
+
+    public KenewstarStatement(String configPath) {
+        dataSource = new ConnectionPool(configPath).getConnPool();
+        connection = new ThreadLocal<>();
+    }
+
+
     /**
-     * 声明返回结果集对象
+     * 从数据库连接池获取连接
+     * @return conn
      */
-    private ResultSet rs;
-    /**
-     * 获取连接
-     */
-    private Connection getConnection(){
-        return new KenewstarConnection().getConnection();
+    public Connection getConnection(){
+        Connection conn = connection.get();
+        try {
+            if (conn == null){
+                conn = dataSource.getConnection();
+            }
+        } catch (SQLException e){
+            e.printStackTrace();
+        }finally {
+            connection.set(conn);
+        }
+        return conn;
     }
     /**
      * 增删改执行器
@@ -37,26 +58,27 @@ public class KenewstarStatement {
      * @param params 可变参数
      * @return 返回执行影响的行数
      */
-    public int preparedUpdateExecutor(String sql,Object...params){
-        // 获取一个新的连接
-        connection = getConnection();
-        AtomicInteger flag = new AtomicInteger();
+    public int preparedUpdateExecutor(String sql, Object...params) {
+        PreparedStatement ps = null;
+        // 获取一个连接
+        Connection conn = getConnection();
+        int flag = 0;
         try {
             //执行sql预处理
-            ps =  connection.prepareStatement(sql);
+            ps =  conn.prepareStatement(sql);
             //传递参数
             int index = 0;
-            for (Object param : params){
-                ps.setObject(++index,param);
+            for (Object param : params) {
+                ps.setObject(++ index, param);
             }
             //执行sql
-            flag.set(ps.executeUpdate());
+            flag = ps.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
-        }finally {
-            close(ps,connection);
+        } finally {
+            close(null, ps);
         }
-        return flag.get();
+        return flag;
     }
 
     /**
@@ -65,35 +87,37 @@ public class KenewstarStatement {
      * @param params 查询条件参数
      * @return 返回查询结果集
      */
-    public List<Map<String,Object>> preparedSelectExecutor(String sql, Object...params){
-        // 获取一个新的连接
-        connection = getConnection();
+    public List<Map<String,Object>> preparedSelectExecutor(String sql, Object...params) {
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        // 获取一个连接
+        Connection conn = getConnection();
         // 创建一个List<Map>对象封装返回结果
-        List<Map<String,Object>> result = null;
+        List<Map<String,Object>> result = new ArrayList<>(0);
         try {
             // 执行SQL预处理
-            ps = connection.prepareStatement(sql);
+            ps = conn.prepareStatement(sql);
             //传递参数
             int index = 0;
             for (Object param : params){
-                ps.setObject(++index,param);
+                ps.setObject(++ index, param);
             }
             // 执行查询
             rs = ps.executeQuery();
             // 取出结果集
-            index = 1;
             // 实例化返回结果对象
-            result = new ArrayList<Map<String, Object>>(rs.getRow());
-            Map<String,Object> map = null;
+            result = new ArrayList<>(rs.getRow());
+            Map<String,Object> map;
             // 遍历结果集，将结果集封装到List中
-            while (rs.next()){
-                map = new HashMap<>();
+            int columnCount = rs.getMetaData().getColumnCount();
+            while (rs.next()) {
+                map = new HashMap<>(columnCount);
                 // 获取结果集对象元数据
                 ResultSetMetaData metaData = rs.getMetaData();
                 // 遍历每一行的属性
-                for (int i=1;i<=metaData.getColumnCount();i++){
-                    String columnName = metaData.getColumnName(i);
-                    map.put(columnName,rs.getObject(columnName));
+                for (int i = 1;i <= columnCount; i++){
+                    String columnName = metaData.getColumnLabel(i);
+                    map.put(columnName, rs.getObject(columnName));
                 }
                 // 将map存入List中
                 result.add(map);
@@ -102,43 +126,38 @@ public class KenewstarStatement {
             e.printStackTrace();
         }finally {
             //关闭资源
-            close(ps,connection,rs);
+            close(rs, ps);
         }
         return result;
     }
 
     /**
      * 关闭资源
-     * @param ps
-     * @param conn
+     * @param rs resultSet
+     * @param ps preparedStatement
      */
-    public void close(PreparedStatement ps,Connection conn){
-        close(ps,conn,null);
-    }
-    /**
-     * 关闭资源
-     * @param ps
-     * @param conn
-     * @param rs
-     */
-    public void close(PreparedStatement ps,Connection conn,ResultSet rs){
+    public void close(ResultSet rs, PreparedStatement ps) {
+        Connection conn = connection.get();
         try {
-            if(ps != null){
+            if (ps != null) {
                 ps.close();
             }
-            if (conn != null){
-                conn.close();
-            }
-            if (rs != null){
+            if (rs != null) {
                 rs.close();
             }
+            if (conn != null) {
+                // 事物是否自动提交
+                if (conn.getAutoCommit()) {
+                    conn.close();
+                }
+            }
+
         } catch (SQLException e) {
             e.printStackTrace();
+        }finally {
+            connection.remove();
         }
 
     }
-
-
-
 
 }

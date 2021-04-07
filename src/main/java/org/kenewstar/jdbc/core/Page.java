@@ -5,6 +5,8 @@ import java.util.List;
 /**
  * 封装分页查询结果
  * @author kenewstar
+ * @date 2020-08-08
+ * @version 0.1
  */
 public class Page<T> {
 

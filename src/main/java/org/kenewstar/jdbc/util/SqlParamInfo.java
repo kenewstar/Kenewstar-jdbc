@@ -8,6 +8,8 @@ import java.lang.reflect.Parameter;
 /**
  * 获取绑定@Param注解的参数信息
  * @author kenewstar
+ * @date 2020-08-08
+ * @version 0.1
  */
 public class SqlParamInfo {
 

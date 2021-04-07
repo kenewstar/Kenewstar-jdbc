@@ -5,6 +5,8 @@ import java.lang.annotation.*;
 /**
  * 对应实体类的类名
  * @author kenewstar
+ * @date 2020-08-08
+ * @version 0.1
  */
 @Documented
 @Target(ElementType.TYPE)
@@ -13,7 +15,7 @@ public @interface Table {
 
     /**
      * 对应数据表的名称
-     * @return
+     * @return 表名
      */
     String tableName() default "";
 

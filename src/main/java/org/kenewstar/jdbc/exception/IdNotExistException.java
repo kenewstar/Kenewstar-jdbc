@@ -3,6 +3,8 @@ package org.kenewstar.jdbc.exception;
 /**
  * id注解不存在异常
  * @author kenewstar
+ * @date 2020-08-08
+ * @version 0.1
  */
 public class IdNotExistException extends RuntimeException{
 

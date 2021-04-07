@@ -1,66 +1,62 @@
 package org.kenewstar.jdbc.core;
 
 import org.kenewstar.jdbc.exception.PageNumberIllegalException;
+import org.kenewstar.jdbc.transaction.JdbcTransaction;
+import org.kenewstar.jdbc.transaction.Transaction;
 import org.kenewstar.jdbc.util.DataTableInfo;
 import java.lang.reflect.Field;
+import java.sql.Connection;
 import java.util.*;
 import java.util.logging.Logger;
 
 /**
  * JDBC执行器
  * @author kenewstar
+ * @date 2020-08-08
+ * @version 0.1
  */
-public class KenewstarJdbcExecutor{
+public class KenewstarJdbcExecutor extends CommonExecutor {
 
-    private final KenewstarStatement statement;
+    private static final Logger log = Logger.getLogger("executor");
 
-    private static final Logger log = Logger.getLogger("SQL");
-
-    public KenewstarJdbcExecutor(){
-        statement = new KenewstarStatement();
+    public KenewstarJdbcExecutor() {
+        super();
     }
 
-    /**
-     * 更新操作
-     * @param sql 执行语句
-     * @param args 执行参数
-     * @return 返回影响行数
-     */
-    public int updateEntity(String sql,Object...args){
-        int update = statement.preparedUpdateExecutor(sql, args);
-        return update;
+    public KenewstarJdbcExecutor(String configPath) {
+        super(configPath);
     }
-    /**
-     * 插入操作
-     * @param sql 执行语句
-     * @param args 执行参数
-     * @return 返回影响行数
-     */
-    public int insertEntity(String sql,Object...args){
-        return updateEntity(sql,args);
+
+    @Override
+    public Transaction getTransaction() {
+        // 获取连接
+        Connection conn = statement.getConnection();
+        // 创建事务控制类
+        // 返回事务
+        return new JdbcTransaction(conn);
     }
-    /**
-     * 删除操作
-     * @param sql 执行语句
-     * @param args 执行参数
-     * @return 返回影响行数
-     */
-    public int deleteEntity(String sql,Object...args){
+
+    @Override
+    public int updateEntity(String sql, Object...args){
+        return statement.preparedUpdateExecutor(sql, args);
+    }
+
+    @Override
+    public int insertEntity(String sql, Object...args){
         return updateEntity(sql,args);
     }
 
-    /**
-     * 根据id查询单个实体
-     * @param sql sql语句
-     * @param entityClass 实体类类型
-     * @param id id参数
-     * @param <T>
-     * @return 返回查询结果对象
-     */
-    public <T> T selectEntityById(String sql,Class<T> entityClass,Integer id){
-        List<Map<String, Object>> maps = statement.preparedSelectExecutor(sql,id);
+    @Override
+    public int deleteEntity(String sql, Object...args){
+        return updateEntity(sql,args);
+    }
+
+
+    @Override
+    public <T> T selectEntityById(String sql, Class<T> entityClass, Integer id){
+        List<Map<String, Object>> maps = statement.preparedSelectExecutor(sql, id);
         // 查询结果为空
-        if (maps.size()==0){
+        if (maps.size() == 0){
             return null;
         }
         // 获取所有列信息
@@ -76,10 +72,10 @@ public class KenewstarJdbcExecutor{
         }
         // 存放属性与属性值的映射
         Map<String,Object> fieldNameAndValue = new HashMap<>();
-        for (String columnName : columnNames.keySet()){
+        for (String columnName : columnNames.keySet()) {
             // 遍历设置属性与属性值的对应关系
             fieldNameAndValue.put(columnNames.get(columnName),
-                    maps.get(0).get(columnName) );
+                                  maps.get(0).get(columnName));
         }
 
         for (Field field : fields) {
@@ -97,33 +93,21 @@ public class KenewstarJdbcExecutor{
         return t;
     }
 
-    /**
-     * 查询所有
-     * @param sql 查询所有的SQL语句
-     * @param entityClass 类
-     * @param <T> 泛型
-     * @return 返回查询结果集合
-     */
-    public <T> List<T>  selectAllEntity(String sql,Class<T> entityClass){
+
+    @Override
+    public <T> List<T>  selectAllEntity(String sql, Class<T> entityClass){
         // 不给列参数，则相当于查询所有数据
-        List<T> list = selectListByColumns(sql, entityClass);
         // 返回所有数据集合
-        return list;
+        return selectListByColumns(sql, entityClass);
     }
 
-    /**
-     * 根据列名查询数据
-     * @param sql SQL查询语句
-     * @param entityClass 类
-     * @param args 查询列的参数
-     * @param <T> 泛型
-     * @return 返回查询结果集合
-     */
-    public <T> List<T> selectListByColumns(String sql,Class<T> entityClass,Object...args){
+
+    @Override
+    public <T> List<T> selectListByColumns(String sql, Class<T> entityClass, Object...args) {
 
         // 执行查询语句
         List<Map<String, Object>> maps = statement.preparedSelectExecutor(sql, args);
-        if (maps.size()==0){
+        if (maps.size() == 0) {
             return null;
         }
         // 获取属性与属性值的映射关系
@@ -138,7 +122,7 @@ public class KenewstarJdbcExecutor{
         Field[] fields = entityClass.getDeclaredFields();
         // 遍历所有结果
         int index = 0;
-        for (Map<String,Object> map: maps ) {
+        for (Map<String,Object> ignored : maps) {
             // 创建一个对象，用于存储单条信息
             try {
                 t = entityClass.newInstance();
@@ -155,7 +139,7 @@ public class KenewstarJdbcExecutor{
                     e.printStackTrace();
                 }
             }
-            index++;
+            index ++;
             result.add(t);
         }
         // 返回List结果集合
@@ -174,8 +158,7 @@ public class KenewstarJdbcExecutor{
         // 存放属性与属性值的映射
         List<Map<String,Object>> fieldNameAndValues = new ArrayList<>(maps.size());
         for (Map<String,Object> map : maps){
-            int index = 0;
-            Map<String,Object> mapField = new HashMap<>();
+            Map<String,Object> mapField = new HashMap<>(columnNames.size());
             for (String columnName : columnNames.keySet()){
                 // 遍历设置属性与属性值的对应关系
                 mapField.put(columnNames.get(columnName),map.get(columnName));
@@ -188,13 +171,10 @@ public class KenewstarJdbcExecutor{
 
     //========================封装 SQL 语句 START===============================//
 
-    /**
-     * 执行插入方法，无需SQL语句
-     * @param obj 插入数据表中的对象参数
-     * @return 返回影响的行数
-     */
-    public int insert(Object obj){
-        Class<?> entityClass = obj.getClass();
+
+    @Override
+    public int insert(Object entity) {
+        Class<?> entityClass = entity.getClass();
         // 获取表名
         String tableName = DataTableInfo.getTableName(entityClass);
         // 获取所有列名
@@ -207,7 +187,7 @@ public class KenewstarJdbcExecutor{
         for (Field field:fields){
             field.setAccessible(true);
             try {
-                mapFields.put(field.getName(),field.get(obj));
+                mapFields.put(field.getName(),field.get(entity));
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
             }
@@ -218,21 +198,20 @@ public class KenewstarJdbcExecutor{
 
         // insert into tableName(columnName,columnName) values(?,?)
         //===============构建SQL语句===============//
-        StringBuilder sql = new StringBuilder("insert into "+tableName);
+        StringBuilder sql = new StringBuilder("insert into " + tableName);
         sql.append('(');
         int index=0;
-        for (String columnName :columnNames.keySet()) {
-            sql.append(columnName+',');
+        StringBuilder valSql = new StringBuilder(" values(");
+        for (String columnName : columnNames.keySet()) {
+            sql.append(columnName).append(',');
             //通过列名获取属性名进行属性的匹配，将匹配的属性的值放入参数数组中
             params[index++] = mapFields.get(columnNames.get(columnName));
+
+            valSql.append("?,");
         }
+        valSql.setCharAt(valSql.length()-1,')');
         sql.setCharAt(sql.length()-1,')');
-        sql.append(" values(");
-        for(int i=0;i<columnNames.size();i++){
-            sql.append("?,");
-        }
-        sql.setCharAt(sql.length()-1,')');
-        //========================================//
+        sql.append(valSql);
 
         // 执行SQL
         int insert = insertEntity(sql.toString(), params);
@@ -242,21 +221,17 @@ public class KenewstarJdbcExecutor{
         return insert;
     }
 
-    /**
-     * 根据id进行删除数据表记录
-     * @param id 参数id
-     * @param entityClass 需要删除的数据记录对应的类
-     * @return 返回影响行数
-     */
-    public int deleteById(Integer id,Class<?> entityClass){
+
+    @Override
+    public int deleteById(Integer id, Class<?> entityClass){
         // 获取表名
         String tableName = DataTableInfo.getTableName(entityClass);
         // 获取表的id
         String idName = DataTableInfo.getIdName(entityClass);
         //============构建SQL语句=================//
         // example : delete from tableName where id = ?
-        StringBuilder sql = new StringBuilder("delete from "+tableName);
-        sql.append(" where "+idName+" = ?");
+        StringBuilder sql = new StringBuilder("delete from " + tableName);
+        sql.append(" where ").append(idName).append(" = ?");
         //======================================//
         // 执行SQL语句
         int delete = deleteEntity(sql.toString(), id);
@@ -266,13 +241,10 @@ public class KenewstarJdbcExecutor{
         return delete;
     }
 
-    /**
-     * 根据id更新数据表记录
-     * @param obj 更新的对象参数
-     * @return 返回影响的行数
-     */
-    public int updateById(Object obj){
-        Class<?> entityClass = obj.getClass();
+
+    @Override
+    public int updateById(Object entity){
+        Class<?> entityClass = entity.getClass();
         // 获取表名
         String tableName = DataTableInfo.getTableName(entityClass);
         // 获取id名
@@ -288,31 +260,32 @@ public class KenewstarJdbcExecutor{
         for (Field field:fields){
             field.setAccessible(true);
             try {
-                mapFields.put(field.getName(),field.get(obj));
+                mapFields.put(field.getName(),field.get(entity));
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
             }
         }
         //===============构建SQL语句并加入参数====================//
         // example : update tableName set columnName=?,columnName=? where id=?
-        StringBuilder sql = new StringBuilder("update "+tableName+" set ");
+        StringBuilder sql = new StringBuilder("update " + tableName + " set ");
         // 遍历所有列名
         int index = 0;
         for (String columnName:columnNames.keySet()) {
             // 判断该列是否是id
-            if (columnName.equals(idName)){
+            if (columnName.equals(idName)) {
                 // 列名中有一个是id名
-                params[columnNames.size()-1]=mapFields.get(columnNames.get(columnName));
+                params[columnNames.size() - 1] = mapFields.get(columnNames.get(columnName));
             }else {
-                sql.append(columnName+"=?,");
+                sql.append(columnName).append("=?,");
                 // 列名不是id名
                 params[index++]=mapFields.get(columnNames.get(columnName));
             }
         }
+        System.out.println(Arrays.toString(params));
         // 去除最后一个逗号
         sql.setCharAt(sql.length()-1,' ');
         // 连接id查询条件
-        sql.append("where "+idName+"=?");
+        sql.append("where ").append(idName).append("=?");
         // 执行SQL语句
         int update = updateEntity(sql.toString(),params);
         // 打印SQL语句
@@ -321,26 +294,18 @@ public class KenewstarJdbcExecutor{
         return update;
     }
 
-    /**
-     * 根据Id查询数据记录
-     * @param id id参数
-     * @param entityClass 类类型
-     * @param <T> 泛型参数
-     * @return 返回实体对象
-     */
-    public <T> T selectById(Integer id,Class<T> entityClass){
+
+    @Override
+    public <T> T selectById(Integer id, Class<T> entityClass){
         // 获取表名
         String tableName = DataTableInfo.getTableName(entityClass);
         // 获取id名
         String idName = DataTableInfo.getIdName(entityClass);
-        // 获取所有列名
-        Map<String, String> columnNames = DataTableInfo.getColumnNames(entityClass);
 
-        //==============构建SQL语句======================//
         // example : select * from tableName where id=?
-        StringBuilder sql = new StringBuilder("select * from "+tableName);
-        sql.append(" where "+idName+"=?");
-        //=============================================//
+        StringBuilder sql = new StringBuilder("select * from " + tableName);
+        sql.append(" where ").append(idName).append("=?");
+
         // 执行SQL语句
         T t = selectEntityById(sql.toString(), entityClass, id);
         // 打印SQL语句
@@ -349,12 +314,8 @@ public class KenewstarJdbcExecutor{
         return t;
     }
 
-    /**
-     * 查询所有
-     * @param entityClass 类类型
-     * @param <T> 泛型
-     * @return 返回查询结果集合
-     */
+
+    @Override
     public <T> List<T> selectAll(Class<T> entityClass){
         // 获取表名
         String tableName = DataTableInfo.getTableName(entityClass);
@@ -373,18 +334,15 @@ public class KenewstarJdbcExecutor{
 
     //==========================封装 SQL 语句 END=========================//
 
-    /**
-     * 统计该实体类在数据库中对应表的记录条数
-     * @param entityClass 类
-     * @return 返回数据记录数
-     */
+
+    @Override
     public long count(Class<?> entityClass){
         // 获取表名与id名
         String tableName = DataTableInfo.getTableName(entityClass);
         String idName = DataTableInfo.getIdName(entityClass);
 
         // 构建SQL
-        String sql = "select count("+idName+") count from "+tableName;
+        String sql = "select count(" + idName + ") count from " + tableName;
 
         // 执行SQL
         List<Map<String, Object>> maps = statement.preparedSelectExecutor(sql);
@@ -392,29 +350,61 @@ public class KenewstarJdbcExecutor{
         // 打印SQL语句
         log.info("Executed SQL ===> "+sql);
         // 获取数量
-        if (maps.size()==0){
-            return 0;
-        }else {
+        if (maps.size() == 0) {
+             return 0;
+        } else {
              return (long) maps.get(0).get("count");
         }
 
     }
 
+    @Override
+    public long count(Object entity) {
+        // 获取class
+        Class<?> entityClass = entity.getClass();
+        // 获取表名
+        String tableName = DataTableInfo.getTableName(entityClass);
+        // 获取列名
+        Map<String, String> columnNames = DataTableInfo.getColumnNames(entityClass);
+        // 参数
+        Object[] params = new Object[columnNames.size()];
+        // select count(*) from tableName where columnName=? and ....
+        StringBuilder sql = new StringBuilder("select count(*) count from ");
+        sql.append(tableName);
+        sql.append(" where 1=1 ");
+        Field[] fields = entityClass.getDeclaredFields();
+        int index = 0;
+        for (Field field : fields) {
+            Object o = null;
+            try {
+                field.setAccessible(true);
+                o = field.get(entity);
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+            String columnName = DataTableInfo.getColumnNameByField(field);
+            if (Objects.nonNull(o) && !Objects.equals(columnName, "")) {
+                sql.append("and ")
+                   .append(columnName)
+                   .append("=? ");
+                params[index ++] = o;
+            }
+        }
+        Object[] paramsArray = Arrays.copyOf(params, index);
+
+        List<Map<String, Object>> maps = statement.preparedSelectExecutor(sql.toString(), paramsArray);
+
+        // 打印SQL语句
+        log.info("Executed SQL ===> "+sql.toString());
+
+        return (long) maps.get(0).get("count");
+    }
+
     //================排序和分页==============================//
 
 
-    /**
-     * 多条件排序查询
-     * 查询条件封装在list中，先根据第一个条件查询，
-     * 在第一个条件成立的情况下再进行第二个条件排序查询，
-     * 依次往后执行，SQL语句如下示例
-     * SQL ： select * from tableName order by column1 desc|asc,[column2 desc|asc]...
-     * @param entityClass 查询数据表对应的类
-     * @param sorts 排序条件集合
-     * @param <T> 泛型
-     * @return 返回查询结果集合
-     */
-    public <T> List<T> selectAll(Class<T> entityClass,List<Sort> sorts){
+    @Override
+    public <T> List<T> selectAll(Class<T> entityClass, List<Sort> sorts){
         if (Objects.isNull(sorts)||sorts.isEmpty()){
             return selectAll(entityClass);
         }
@@ -433,10 +423,10 @@ public class KenewstarJdbcExecutor{
             // 判断是升序或降序
             if (Objects.equals(sort.getOrder(),Sort.DESC)){
                 // 排序为降序
-                sql.append(columnName+" desc,");
+                sql.append(columnName).append(" desc,");
             }else {
                 // 升序
-                sql.append(columnName+" asc,");
+                sql.append(columnName).append(" asc,");
             }
 
         }
@@ -450,16 +440,8 @@ public class KenewstarJdbcExecutor{
     }
 
 
-    // 分页查询
-
-    /**
-     * 分页查询(可以先排序再分页) 即将排序的结果进行分页操作
-     * @param entityClass 类
-     * @param condition 分页查询条件
-     * @param <T> 泛型
-     * @return 返回分页查询结果
-     */
-    public <T> Page<T> selectAll(Class<T> entityClass,PageCondition condition){
+    @Override
+    public <T> Page<T> selectAll(Class<T> entityClass, PageCondition condition) {
         // 根据分页中的排序条件查询所有
         List<T> list = selectAll(entityClass, condition.getSort());
 
@@ -477,25 +459,25 @@ public class KenewstarJdbcExecutor{
         // 设置每页记录数
         page.setPageSize(pageSize);
         // 设置总页数(总记录数/每页记录数[+1])
-        if(size%pageSize==0){
-            page.setTotalPages(size/pageSize);
+        if(size%pageSize == 0) {
+            page.setTotalPages(size / pageSize);
         }else {
-            page.setTotalPages(size/pageSize+1);
+            page.setTotalPages(size / pageSize+1);
         }
 
         // 判断页码是否非法
-        if (pageNumber<0||pageNumber>=page.getTotalPages()){
+        if (pageNumber < 0 || pageNumber >= page.getTotalPages()) {
             // 抛出页码非法异常
             throw new PageNumberIllegalException(
                     "the pageNumber parameter is error "+
-                    "pageNumber : "+pageNumber);
+                    "pageNumber : " + pageNumber);
         }
 
         // 取出分页的数据记录
-        int fromIndex = pageNumber*pageSize;
-        int toIndex = (pageNumber+1)*pageSize;
+        int fromIndex = pageNumber * pageSize;
+        int toIndex = (pageNumber + 1) * pageSize;
         // 判断是否是最后一页
-        if (condition.getPageNumber()==page.getTotalPages()-1){
+        if (condition.getPageNumber() == page.getTotalPages() - 1) {
             // 最后一页
             page.setContents(list.subList(fromIndex,size));
         }else {
@@ -508,7 +490,59 @@ public class KenewstarJdbcExecutor{
     }
 
 
+
+
     //======================================================//
 
+
+    @Override
+    public int updateByIdSelective(Object entity) {
+        Class<?> entityClass = entity.getClass();
+
+        String tableName = DataTableInfo.getTableName(entityClass);
+        Map<String, String> columnNames = DataTableInfo.getColumnNames(entityClass);
+        // id列名
+        String idName = DataTableInfo.getIdName(entityClass);
+        // id属性名
+        String idFieldName = columnNames.get(idName);
+        Object idValue = null;
+        // 参数
+        Object[] params = new Object[columnNames.size()];
+
+        StringBuilder sql = new StringBuilder("update ");
+        sql.append(tableName)
+           .append(" set ");
+        Field[] fields = entityClass.getDeclaredFields();
+        int index = 0;
+        for (Field field : fields) {
+            field.setAccessible(true);
+            Object o;
+            String columnName = DataTableInfo.getColumnNameByField(field);
+            try {
+                o = field.get(entity);
+                if (Objects.nonNull(o) && !Objects.equals(idFieldName, field.getName())) {
+                    sql.append(columnName)
+                       .append("=? ");
+                    params[index ++] = o;
+                }
+                if (Objects.equals(idFieldName, field.getName())) {
+                    idValue = field.get(entity);
+                }
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        }
+        if (index == 0) {
+            return 0;
+        }
+        sql.append("where ").append(idName).append("=?");
+        params[index ++] = idValue;
+
+        Object[] paramsArray = Arrays.copyOf(params, index);
+        // 打印SQL语句
+        log.info("Executed SQL ===> "+sql.toString());
+
+        return updateEntity(sql.toString(), paramsArray);
+    }
 
 }
