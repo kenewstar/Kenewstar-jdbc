@@ -4,10 +4,7 @@ import org.kenewstar.jdbc.core.datasource.ConnectionPool;
 
 import javax.sql.DataSource;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  *
@@ -96,7 +93,7 @@ public class KenewstarStatement {
         // 获取一个连接
         Connection conn = getConnection();
         // 创建一个List<Map>对象封装返回结果
-        List<Map<String,Object>> result = null;
+        List<Map<String,Object>> result = new ArrayList<>(0);
         try {
             // 执行SQL预处理
             ps = conn.prepareStatement(sql);

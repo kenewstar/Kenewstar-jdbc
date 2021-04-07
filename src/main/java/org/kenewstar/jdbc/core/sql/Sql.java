@@ -17,12 +17,20 @@ import java.util.List;
 public final class Sql {
 
 
-    public final StringBuilder sql;
-    public final List<Object> params;
+    protected final StringBuilder sql;
+    protected final List<Object> params;
 
     public Sql() {
         this.sql = new StringBuilder();
         this.params = new ArrayList<>();
+    }
+
+    public StringBuilder getSql() {
+        return sql;
+    }
+
+    public List<Object> getParams() {
+        return params;
     }
 
     /**
@@ -320,6 +328,62 @@ public final class Sql {
     public <T, V> Sql by(FunctionColumn<T, V> column) {
         sql.append(SqlKeyWord.COMMA)
            .append(FunctionUtil.getColumnName(column));
+        return this;
+    }
+
+    /**
+     * 升序排序，第一个字段
+     * @param column 列名
+     * @param <T> t
+     * @param <V> v
+     * @return this
+     */
+    public <T, V> Sql orderByAsc(FunctionColumn<T, V> column) {
+        sql.append(SqlKeyWord.ORDER_BY)
+           .append(FunctionUtil.getColumnName(column))
+           .append(SqlKeyWord.ASC);
+        return this;
+    }
+
+    /**
+     * 降序排序第一个字段
+     * @param column 列名
+     * @param <T> t
+     * @param <V> v
+     * @return this
+     */
+    public <T, V> Sql orderByDesc(FunctionColumn<T, V> column) {
+        sql.append(SqlKeyWord.ORDER_BY)
+           .append(FunctionUtil.getColumnName(column))
+           .append(SqlKeyWord.DESC);
+        return this;
+    }
+
+    /**
+     * 升序排序其他字段
+     * @param column 列名
+     * @param <T> t
+     * @param <V> v
+     * @return this
+     */
+    public <T, V> Sql asc(FunctionColumn<T, V> column) {
+        sql.append(SqlKeyWord.COMMA)
+           .append(FunctionUtil.getColumnName(column))
+           .append(SqlKeyWord.ASC);
+        return this;
+    }
+
+    /**
+     * 降序排序其他字段
+     * @param column 列名
+     * @param <T> t
+     * @param <V> v
+     * @return this
+     */
+    public <T, V> Sql desc(FunctionColumn<T, V> column) {
+        sql.append(SqlKeyWord.COMMA)
+           .append(FunctionUtil.getColumnName(column))
+           .append(SqlKeyWord.DESC);
         return this;
     }
 

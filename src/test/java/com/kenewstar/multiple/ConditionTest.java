@@ -77,6 +77,13 @@ public class ConditionTest {
 
     @Test
     public void test3() {
-        KenewstarUtil.getTableName(CommonExecutor.class);
+        List<User> users = executor.selectList(User.class, sql ->
+                sql.where()
+                    .gt(User::getAge, 20)
+                    .and()
+                    .eq(User::getName, "aaaa"));
+        users.forEach(user -> {
+            System.out.println(user.getId());
+        });
     }
 }

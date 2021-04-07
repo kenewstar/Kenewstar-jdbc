@@ -19,6 +19,9 @@ public interface ConditionJdbcExecutor {
      * @param <T> t
      * @return list
      */
-    <T> List<T> selectList(Class<?> fromClass , Class<T> resultType, MapTo mapTo);
+    <T> List<T> selectList(Class<?> fromClass, Class<T> resultType, MapTo mapTo);
+
+
+    <T> List<T> selectList(Class<T> entityClass, MapTo mapTo);
 
 }
