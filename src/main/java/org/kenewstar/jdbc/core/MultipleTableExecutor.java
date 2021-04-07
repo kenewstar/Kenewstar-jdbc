@@ -1,7 +1,8 @@
 package org.kenewstar.jdbc.core;
 
 import org.kenewstar.jdbc.annotation.OfTable;
-import org.kenewstar.jdbc.annotation.Table;
+import org.kenewstar.jdbc.core.sql.Sql;
+import org.kenewstar.jdbc.core.sql.SqlKeyWord;
 import org.kenewstar.jdbc.function.MapTo;
 import org.kenewstar.jdbc.util.MultipleTableUtil;
 
@@ -16,7 +17,7 @@ import java.util.*;
 public class MultipleTableExecutor extends KenewstarJdbcExecutor{
 
     protected StringBuilder resultType(Class<?> resultType) {
-        StringBuilder sql = new StringBuilder("select ");
+        StringBuilder sql = new StringBuilder(SqlKeyWord.SELECT);
         // 获取所有属性
         Field[] fields = resultType.getDeclaredFields();
         for (Field field : fields) {
@@ -31,14 +32,16 @@ public class MultipleTableExecutor extends KenewstarJdbcExecutor{
                     columnName = field.getName();
                 }
                 // 拼接sql
-                sql.append(tableName).append(".").append(columnName)
-                   .append(" as ").append(field.getName()).append(",");
+                sql.append(tableName).append(SqlKeyWord.SPOT)
+                   .append(columnName)
+                   .append(SqlKeyWord.AS).append(field.getName())
+                   .append(SqlKeyWord.COMMA);
             } else {
                 throw new RuntimeException("ofTable not found exception");
             }
 
         }
-        sql.setCharAt(sql.length() - 1, ' ');
+        sql.setCharAt(sql.length() - 1, SqlKeyWord.BLANK_CHAR);
         return sql;
     }
 
@@ -47,7 +50,9 @@ public class MultipleTableExecutor extends KenewstarJdbcExecutor{
         Sql sql = new Sql();
         sql.sql.append(resultType(resultType));
         // from user
-        sql.sql.append("from ").append(MultipleTableUtil.getTableName(fromClass)).append(" ");
+        sql.sql.append(SqlKeyWord.FROM)
+               .append(MultipleTableUtil.getTableName(fromClass))
+               .append(SqlKeyWord.BLANK);
         mapTo.conditionSql(sql);
         // 执行sql
         List<Map<String, Object>> maps
@@ -55,12 +60,12 @@ public class MultipleTableExecutor extends KenewstarJdbcExecutor{
         result = new ArrayList<>(Objects.isNull(maps) ? 0 : maps.size());
         // 获取所有返回类型的属性
         Field[] fields = resultType.getDeclaredFields();
-        maps.forEach( resultMap -> {
+        maps.forEach(resultMap -> {
             try {
                 T t = resultType.newInstance();
                 // 数据组装
                 for (Field field : fields) {
-                    field.setAccessible(true);
+                    field.setAccessible(Boolean.TRUE);
                     field.set(t,resultMap.get(field.getName()));
                 }
                 result.add(t);
@@ -70,77 +75,6 @@ public class MultipleTableExecutor extends KenewstarJdbcExecutor{
 
         });
         return result;
-
-    }
-
-    public static class Sql {
-
-        private final StringBuilder sql;
-        private final List<Object> params;
-
-        public Sql() {
-            this.sql = new StringBuilder();
-            this.params = new ArrayList<>();
-        }
-
-        public Sql joinEq(Class<?> table, String name, Class<?> otherTable, String otherName) {
-            sql.append(MultipleTableUtil.getTableName(table)).append(".").append(name)
-               .append(" = ")
-               .append(MultipleTableUtil.getTableName(otherTable)).append(".").append(otherName)
-               .append(" ");
-            return this;
-        }
-
-        public Sql eq(Class<?> table, String name, Object value) {
-            sql.append(MultipleTableUtil.getTableName(table))
-               .append(".")
-               .append(name)
-               .append(" = ")
-               .append("?");
-            params.add(value);
-            return this;
-        }
-        public Sql lt(Class<?> table, String name, Object value) {
-            sql.append(MultipleTableUtil.getTableName(table))
-               .append(".")
-               .append(name)
-               .append(" < ")
-               .append("?");
-            params.add(value);
-            return this;
-        }
-
-        public Sql gt(Class<?> table, String name, Object value) {
-            sql.append(MultipleTableUtil.getTableName(table))
-               .append(".")
-               .append(name)
-               .append(" > ")
-               .append("?");
-            params.add(value);
-            return this;
-        }
-
-        public Sql where() {
-            sql.append("where ");
-            return this;
-        }
-
-        public Sql and() {
-            sql.append(" and ");
-            return this;
-        }
-
-        public Sql or() {
-            sql.append(" or ");
-            return this;
-        }
-
-        public Sql leftJoin(Class<?> joinClass) {
-            sql.append("left join ")
-               .append(MultipleTableUtil.getTableName(joinClass))
-               .append(" on ");
-            return this;
-        }
 
     }
 

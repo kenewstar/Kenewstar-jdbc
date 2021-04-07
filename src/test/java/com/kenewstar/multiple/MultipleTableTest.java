@@ -41,12 +41,12 @@ public class MultipleTableTest {
     public void test2() {
         executor.selectList(User.class, UserAndDeptDTO.class, sql -> {
             sql.leftJoin(Dept.class)
-               .joinEq(User.class, "dept_id", Dept.class, "id")
+               .joinEq(User::getDeptId, Dept::getId)
                .leftJoin(Company.class)
-               .joinEq(User.class,"company_id",Company.class, "id")
+               .joinEq(User::getCompanyId, Company::getId)
                .where()
-               .gt(User.class, "age", 10);
-               //.and().eq(Dept.class, "name", "bbbb");
+               .gt(User::getAge, 10)
+               .and().eq(User::getName, "aaaa");
         }).forEach(System.out::println);
 
     }
@@ -57,12 +57,11 @@ public class MultipleTableTest {
         Thread thread = new Thread(() -> {
             List<UserAndDeptDTO> dtoList = executor.selectList(User.class, UserAndDeptDTO.class, sql -> {
                 sql.leftJoin(Dept.class)
-                        .joinEq(User.class, "dept_id", Dept.class, "id")
-                        .leftJoin(Company.class)
-                        .joinEq(User.class, "company_id", Company.class, "id")
-                        .where()
-                        .gt(User.class, "age", 10);
-                //.and().eq(Dept.class, "name", "bbbb");
+                    .joinEq(User::getDeptId, Dept::getId)
+                    .leftJoin(Company.class)
+                    .joinEq(User::getCompanyId, Company::getId)
+                    .where()
+                    .gt(User::getAge, 10);
             });
             System.out.println(dtoList.size());
         });

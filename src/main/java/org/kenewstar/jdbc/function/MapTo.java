@@ -1,6 +1,6 @@
 package org.kenewstar.jdbc.function;
 
-import org.kenewstar.jdbc.core.MultipleTableExecutor;
+import org.kenewstar.jdbc.core.sql.Sql;
 
 /**
  * @author xinke.huang@hand-china.com
@@ -13,5 +13,5 @@ public interface MapTo {
      * 条件SQL
      * @param sql sql构建对象
      */
-    void conditionSql(MultipleTableExecutor.Sql sql);
+    void conditionSql(Sql sql);
 }
