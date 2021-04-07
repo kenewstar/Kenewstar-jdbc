@@ -1,22 +1,33 @@
 package org.kenewstar.jdbc.core;
 
 import org.kenewstar.jdbc.annotation.OfTable;
+import org.kenewstar.jdbc.core.factory.SqlFactory;
 import org.kenewstar.jdbc.core.sql.Sql;
 import org.kenewstar.jdbc.core.sql.SqlKeyWord;
 import org.kenewstar.jdbc.function.MapTo;
-import org.kenewstar.jdbc.util.MultipleTableUtil;
+import org.kenewstar.jdbc.util.KenewstarUtil;
 
 import java.lang.reflect.Field;
 import java.util.*;
 /**
- * 多表操作执行器
- * @author xinke.huang@hand-china.com
+ * common 执行器
+ * @author kenewstar
  * @version 1.0
  * @date 2021/4/1
  */
-public class MultipleTableExecutor extends KenewstarJdbcExecutor{
+public abstract class CommonExecutor implements JdbcExecutor {
 
-    protected StringBuilder resultType(Class<?> resultType) {
+    protected KenewstarStatement statement;
+
+    public CommonExecutor() {
+        this.statement = new KenewstarStatement();
+    }
+
+    public CommonExecutor(String configPath) {
+        this.statement = new  KenewstarStatement(configPath);
+    }
+
+    private StringBuilder resultType(Class<?> resultType) {
         StringBuilder sql = new StringBuilder(SqlKeyWord.SELECT);
         // 获取所有属性
         Field[] fields = resultType.getDeclaredFields();
@@ -25,7 +36,7 @@ public class MultipleTableExecutor extends KenewstarJdbcExecutor{
                 OfTable ofTable = field.getAnnotation(OfTable.class);
                 Class<?> entityClass = ofTable.entityClass();
                 // 获取表名
-                String tableName = MultipleTableUtil.getTableName(entityClass);
+                String tableName = KenewstarUtil.getTableName(entityClass);
                 // 获取列名
                 String columnName = ofTable.fieldName();
                 if (Objects.equals(columnName, "")) {
@@ -45,13 +56,14 @@ public class MultipleTableExecutor extends KenewstarJdbcExecutor{
         return sql;
     }
 
-    public <T> List<T> selectList(Class<?> fromClass ,Class<T> resultType, MapTo mapTo) {
+    @Override
+    public <T> List<T> selectList(Class<?> fromClass , Class<T> resultType, MapTo mapTo) {
         List<T> result;
-        Sql sql = new Sql();
+        Sql sql = SqlFactory.getSql();
         sql.sql.append(resultType(resultType));
         // from user
         sql.sql.append(SqlKeyWord.FROM)
-               .append(MultipleTableUtil.getTableName(fromClass))
+               .append(KenewstarUtil.getTableName(fromClass))
                .append(SqlKeyWord.BLANK);
         mapTo.conditionSql(sql);
         // 执行sql

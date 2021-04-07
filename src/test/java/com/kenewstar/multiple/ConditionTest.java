@@ -3,7 +3,11 @@ package com.kenewstar.multiple;
 import com.kenewstar.UserAndDeptDTO;
 import org.junit.Before;
 import org.junit.Test;
-import org.kenewstar.jdbc.core.MultipleTableExecutor;
+import org.kenewstar.jdbc.core.CommonExecutor;
+import org.kenewstar.jdbc.core.JdbcExecutor;
+import org.kenewstar.jdbc.core.KenewstarJdbcExecutor;
+import org.kenewstar.jdbc.core.factory.JdbcExecutorFactory;
+import org.kenewstar.jdbc.util.KenewstarUtil;
 
 import java.util.List;
 
@@ -12,12 +16,12 @@ import java.util.List;
  * @version 1.0
  * @date 2021/4/1
  */
-public class MultipleTableTest {
-    private MultipleTableExecutor executor;
+public class ConditionTest {
+    private JdbcExecutor executor;
 
     @Before
     public void before() {
-        executor = new MultipleTableExecutor();
+        executor = JdbcExecutorFactory.getExecutor();
     }
 
     @Test
@@ -69,5 +73,10 @@ public class MultipleTableTest {
         thread.start();
         thread.join();
         }
+    }
+
+    @Test
+    public void test3() {
+        KenewstarUtil.getTableName(CommonExecutor.class);
     }
 }

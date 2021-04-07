@@ -51,17 +51,22 @@ public class ConnectionPool {
     /**
      * 声明数据库连接池配置信息
      */
-    private static final Map<String, String> PROP_KEY_AND_VALUE;
+    private final Map<String, String> propKeyAndValue;
 
-    static {
+
+    public ConnectionPool() {
+        this(JDBC_PROP_PATH);
+    }
+
+    public ConnectionPool(String configPath) {
         // 初始化加载jdbc.properties配置文件
-        JdbcProperties.initProperties(JDBC_PROP_PATH);
+        JdbcProperties.initProperties(configPath);
         // 获取数据库连接池配置信息
-        PROP_KEY_AND_VALUE = JdbcProperties.getPropKeyAndValue();
+        propKeyAndValue = JdbcProperties.getPropKeyAndValue();
 
         log.info("init jdbc.properties config info ......");
 
-        log.info(PROP_KEY_AND_VALUE.toString());
+        log.info(propKeyAndValue.toString());
 
     }
 
@@ -71,7 +76,7 @@ public class ConnectionPool {
      */
     public DataSource getConnPool() {
         // 获取数据库连接池的类型
-        String dsType = PROP_KEY_AND_VALUE.get(TYPE);
+        String dsType = propKeyAndValue.get(TYPE);
         // 通过反射实例化连接池对象
         Class<?> type = KnsDataSource.class;
         try {
@@ -116,13 +121,13 @@ public class ConnectionPool {
             c3p0 = pool.newInstance();
             // 设置连接信息
             Method driver = pool.getMethod("setDriverClass", String.class);
-            driver.invoke(c3p0, PROP_KEY_AND_VALUE.get(DRIVER));
+            driver.invoke(c3p0, propKeyAndValue.get(DRIVER));
             Method url = pool.getMethod("setJdbcUrl", String.class);
-            url.invoke(c3p0, PROP_KEY_AND_VALUE.get(URL));
+            url.invoke(c3p0, propKeyAndValue.get(URL));
             Method user = pool.getMethod("setUser", String.class);
-            user.invoke(c3p0, PROP_KEY_AND_VALUE.get(USER));
+            user.invoke(c3p0, propKeyAndValue.get(USER));
             Method pwd = pool.getMethod("setPassword", String.class);
-            pwd.invoke(c3p0, PROP_KEY_AND_VALUE.get(PWD));
+            pwd.invoke(c3p0, propKeyAndValue.get(PWD));
 
             // 设置c3p0连接池的一些其他属性
             setConnPoolProperties(pool, c3p0);
@@ -177,27 +182,27 @@ public class ConnectionPool {
     private DataSource getDefaultDataSource() {
         KnsDataSource dataSource = new KnsDataSource();
         // 设置连接属性
-        dataSource.setDriverClass(PROP_KEY_AND_VALUE.get(DRIVER));
-        dataSource.setJdbcUrl(PROP_KEY_AND_VALUE.get(URL));
-        dataSource.setUsername(PROP_KEY_AND_VALUE.get(USER));
-        dataSource.setPassword(PROP_KEY_AND_VALUE.get(PWD));
+        dataSource.setDriverClass(propKeyAndValue.get(DRIVER));
+        dataSource.setJdbcUrl(propKeyAndValue.get(URL));
+        dataSource.setUsername(propKeyAndValue.get(USER));
+        dataSource.setPassword(propKeyAndValue.get(PWD));
 
-        String initialSize = PROP_KEY_AND_VALUE.get("initialSize");
+        String initialSize = propKeyAndValue.get("initialSize");
         if (Objects.nonNull(initialSize)) {
             dataSource.setInitialSize(Integer.parseInt(initialSize));
         }
 
-        String waitTime = PROP_KEY_AND_VALUE.get("waitTime");
+        String waitTime = propKeyAndValue.get("waitTime");
         if (Objects.nonNull(waitTime)) {
             dataSource.setWaitTime(Long.parseLong(waitTime));
         }
 
-        String maxSize = PROP_KEY_AND_VALUE.get("maxSize");
+        String maxSize = propKeyAndValue.get("maxSize");
         if (Objects.nonNull(maxSize)) {
             dataSource.setMaxSize(Integer.parseInt(maxSize));
         }
 
-        String minIdle = PROP_KEY_AND_VALUE.get("minIdle");
+        String minIdle = propKeyAndValue.get("minIdle");
         if (Objects.nonNull(minIdle)) {
             dataSource.setMinIdle(Integer.parseInt(minIdle));
         }
@@ -220,7 +225,7 @@ public class ConnectionPool {
             // 获取set方法对应的属性名
             String fieldName = getPropNameBySetMethod(m);
             // 获取属性对应的值
-            String propValue = PROP_KEY_AND_VALUE.get(fieldName);
+            String propValue = propKeyAndValue.get(fieldName);
             // 判断值是否为null或者为空串
             if (Objects.isNull(propValue) || "".equals(propValue)){
                 // 是，则跳出本次循环

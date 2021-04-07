@@ -2,8 +2,6 @@ package org.kenewstar.jdbc.util;
 
 import org.kenewstar.jdbc.exception.PropertiesFileNotFoundException;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Enumeration;
@@ -15,13 +13,13 @@ import java.util.Properties;
  * 获取jdbcProperties的属性值
  * @author kenewstar
  * @date 2020-08-08
- * @version 0.1
+ * @version 1.0
  */
 public class JdbcProperties {
     /**
      * 用于存储读取后的properties中的键值对
      */
-    private static Map<String,String> propKeyAndValue = new HashMap<>();
+    private static final Map<String,String> PROP_KEY_AND_VALUE = new HashMap<>();
 
     /**
      * 初始化properties,
@@ -33,7 +31,7 @@ public class JdbcProperties {
         //创建properties对象
         Properties prop = new Properties();
         //声明文件输入流
-        InputStream is = null;
+        InputStream is;
         try {
             //读取properties文件
             is = ClassLoader.getSystemResourceAsStream(path);
@@ -59,7 +57,7 @@ public class JdbcProperties {
             String propValue = prop.getProperty(propKey);
 
             //将键值对存入Map中
-            propKeyAndValue.put(propKey,propValue);
+            PROP_KEY_AND_VALUE.put(propKey,propValue);
 
         }
 
@@ -71,6 +69,6 @@ public class JdbcProperties {
      * @return 返回键值对的Map信息
      */
     public static Map<String, String> getPropKeyAndValue() {
-        return propKeyAndValue;
+        return PROP_KEY_AND_VALUE;
     }
 }

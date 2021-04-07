@@ -5,12 +5,14 @@ import org.kenewstar.jdbc.transaction.Transaction;
 import java.util.List;
 
 /**
- * Jdbc执行器顶级接口，声明所有操作数据库的方法
+ * Jdbc执行器接口
  * @author kenewstar
  * @date 2020-08-08
- * @version 0.2
+ * @version 1.0
  */
-public interface JdbcExecutor {
+public interface JdbcExecutor extends ConditionJdbcExecutor {
+
+
     /**
      * 获取事务
      * @return 返回事务
@@ -65,7 +67,6 @@ public interface JdbcExecutor {
      */
     <T> List<T> selectListByColumns(String sql, Class<T> entityClass, Object... args);
 
-    //========================封装 SQL 语句 START===============================//
 
     /**
      * 将一个对象数据插入到数据库中
@@ -107,8 +108,6 @@ public interface JdbcExecutor {
     <T> List<T> selectAll(Class<T> entityClass);
 
 
-    //========================封装 SQL 语句 END=================================//
-
     /**
      * 统计该实体类在数据库中对应表的记录条数
      * @param entityClass 类
@@ -125,8 +124,6 @@ public interface JdbcExecutor {
      */
     long count(Object entity);
 
-
-    //================排序和分页 START=============================//
 
     /**
      * 多条件排序查询
@@ -151,7 +148,8 @@ public interface JdbcExecutor {
      */
     <T> Page<T> selectAll(Class<T> entityClass, PageCondition condition);
 
-    //================排序和分页 END==============================//
+
+
 
     /**
      * 根据主键更新

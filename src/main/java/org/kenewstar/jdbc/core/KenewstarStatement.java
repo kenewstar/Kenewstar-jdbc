@@ -14,32 +14,44 @@ import java.util.Map;
  * 处理sql语句
  * @author kenewstar
  * @date 2020-08-08
- * @version 0.1
+ * @version 1.0
  */
 public class KenewstarStatement {
+
     /**
      * 获取数据库连接池
      */
-    private static final DataSource DATASOURCE = new ConnectionPool().getConnPool();
+    private final DataSource dataSource;
     /**
      * 使用本地线程声明连接
      */
-    private static final ThreadLocal<Connection> CONNECTION = new ThreadLocal<>();
+    private final ThreadLocal<Connection> connection;
+
+    public KenewstarStatement() {
+        dataSource = new ConnectionPool().getConnPool();
+        connection = new ThreadLocal<>();
+    }
+
+    public KenewstarStatement(String configPath) {
+        dataSource = new ConnectionPool(configPath).getConnPool();
+        connection = new ThreadLocal<>();
+    }
+
 
     /**
      * 从数据库连接池获取连接
      * @return conn
      */
     public Connection getConnection(){
-        Connection conn = CONNECTION.get();
+        Connection conn = connection.get();
         try {
             if (conn == null){
-                conn = DATASOURCE.getConnection();
+                conn = dataSource.getConnection();
             }
         } catch (SQLException e){
             e.printStackTrace();
         }finally {
-            CONNECTION.set(conn);
+            connection.set(conn);
         }
         return conn;
     }
@@ -128,7 +140,7 @@ public class KenewstarStatement {
      * @param ps preparedStatement
      */
     public void close(ResultSet rs, PreparedStatement ps) {
-        Connection conn = CONNECTION.get();
+        Connection conn = connection.get();
         try {
             if (ps != null) {
                 ps.close();
@@ -146,7 +158,7 @@ public class KenewstarStatement {
         } catch (SQLException e) {
             e.printStackTrace();
         }finally {
-            CONNECTION.remove();
+            connection.remove();
         }
 
     }

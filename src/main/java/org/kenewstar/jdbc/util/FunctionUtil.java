@@ -3,20 +3,26 @@ package org.kenewstar.jdbc.util;
 import java.io.Serializable;
 import java.lang.invoke.SerializedLambda;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Objects;
 
 /**
- * @author xinke.huang@hand-china.com
+ * @author kenewstar
  * @version 1.0
  * @date 2021/4/6
  */
 public class FunctionUtil {
+
     private static final String WRITE_REPLACE = "writeReplace";
     private static final String IS  = "is";
     private static final String GET = "get";
 
+    /**
+     * 获取方法引用对应的全列名称
+     * User::getName ---> user.name
+     * @param column 函数式接口
+     * @return 全列名
+     */
     public static String getColumnName(Serializable column) {
         Method method;
         SerializedLambda lambda;
@@ -31,6 +37,12 @@ public class FunctionUtil {
         }
         return columnName;
     }
+
+    /**
+     * lambda解析
+     * @param lambda lambda
+     * @return 全列名
+     */
     private static String resolveLambda(SerializedLambda lambda) {
         String methodName = lambda.getImplMethodName();
         String tableName = "";

@@ -2,7 +2,7 @@ package org.kenewstar.jdbc.core.sql;
 
 import org.kenewstar.jdbc.function.FunctionColumn;
 import org.kenewstar.jdbc.util.FunctionUtil;
-import org.kenewstar.jdbc.util.MultipleTableUtil;
+import org.kenewstar.jdbc.util.KenewstarUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -357,7 +357,7 @@ public final class Sql {
      */
     public Sql leftJoin(Class<?> joinClass) {
         sql.append(SqlKeyWord.LEFT_JOIN)
-           .append(MultipleTableUtil.getTableName(joinClass))
+           .append(KenewstarUtil.getTableName(joinClass))
            .append(SqlKeyWord.ON);
         return this;
     }

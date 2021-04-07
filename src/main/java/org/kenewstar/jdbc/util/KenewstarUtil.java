@@ -5,25 +5,30 @@ import org.kenewstar.jdbc.annotation.Table;
 import java.util.Objects;
 
 /**
- * @author xinke.huang@hand-china.com
+ * @author kenewstar
  * @version 1.0
- * @date 2021/4/3
+ * @date 2021/4/7
  */
-public class MultipleTableUtil {
+public class KenewstarUtil {
+    private static final String BLANK = "";
 
     /**
-     * 获取表名
+     * 根据实体类获取表名
      * @param clz 表的实体类
      * @return 表名
      */
     public static String getTableName(Class<?> clz) {
         Table table = clz.getAnnotation(Table.class);
+        // 检查table
+        Assert.notNull(table);
         String tableName = table.tableName();
-        if (Objects.equals(tableName, "")) {
+        if (Objects.equals(tableName, BLANK)) {
             tableName = clz.getSimpleName().substring(0, 1).toLowerCase() +
-                    clz.getSimpleName().substring(1);
+                        clz.getSimpleName().substring(1);
         }
         return tableName;
     }
+
+
 
 }

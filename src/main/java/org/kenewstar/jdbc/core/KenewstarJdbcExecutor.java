@@ -1,6 +1,5 @@
 package org.kenewstar.jdbc.core;
 
-import org.kenewstar.jdbc.annotation.Column;
 import org.kenewstar.jdbc.exception.PageNumberIllegalException;
 import org.kenewstar.jdbc.transaction.JdbcTransaction;
 import org.kenewstar.jdbc.transaction.Transaction;
@@ -16,13 +15,16 @@ import java.util.logging.Logger;
  * @date 2020-08-08
  * @version 0.1
  */
-public class KenewstarJdbcExecutor implements JdbcExecutor{
+public class KenewstarJdbcExecutor extends CommonExecutor {
 
-    protected static final KenewstarStatement statement = new KenewstarStatement();
+    private static final Logger log = Logger.getLogger("executor");
 
-    private static final Logger log = Logger.getLogger("SQL");
+    public KenewstarJdbcExecutor() {
+        super();
+    }
 
-    public KenewstarJdbcExecutor(){
+    public KenewstarJdbcExecutor(String configPath) {
+        super(configPath);
     }
 
     @Override
@@ -52,7 +54,7 @@ public class KenewstarJdbcExecutor implements JdbcExecutor{
 
     @Override
     public <T> T selectEntityById(String sql, Class<T> entityClass, Integer id){
-        List<Map<String, Object>> maps = statement.preparedSelectExecutor(sql,id);
+        List<Map<String, Object>> maps = statement.preparedSelectExecutor(sql, id);
         // 查询结果为空
         if (maps.size() == 0){
             return null;
@@ -73,7 +75,7 @@ public class KenewstarJdbcExecutor implements JdbcExecutor{
         for (String columnName : columnNames.keySet()) {
             // 遍历设置属性与属性值的对应关系
             fieldNameAndValue.put(columnNames.get(columnName),
-                                  maps.get(0).get(columnName) );
+                                  maps.get(0).get(columnName));
         }
 
         for (Field field : fields) {
@@ -101,11 +103,11 @@ public class KenewstarJdbcExecutor implements JdbcExecutor{
 
 
     @Override
-    public <T> List<T> selectListByColumns(String sql, Class<T> entityClass, Object...args){
+    public <T> List<T> selectListByColumns(String sql, Class<T> entityClass, Object...args) {
 
         // 执行查询语句
         List<Map<String, Object>> maps = statement.preparedSelectExecutor(sql, args);
-        if (maps.size()==0){
+        if (maps.size() == 0) {
             return null;
         }
         // 获取属性与属性值的映射关系
@@ -120,7 +122,7 @@ public class KenewstarJdbcExecutor implements JdbcExecutor{
         Field[] fields = entityClass.getDeclaredFields();
         // 遍历所有结果
         int index = 0;
-        for (Map<String,Object> ignored : maps ) {
+        for (Map<String,Object> ignored : maps) {
             // 创建一个对象，用于存储单条信息
             try {
                 t = entityClass.newInstance();
@@ -137,7 +139,7 @@ public class KenewstarJdbcExecutor implements JdbcExecutor{
                     e.printStackTrace();
                 }
             }
-            index++;
+            index ++;
             result.add(t);
         }
         // 返回List结果集合
@@ -171,7 +173,7 @@ public class KenewstarJdbcExecutor implements JdbcExecutor{
 
 
     @Override
-    public int insert(Object entity){
+    public int insert(Object entity) {
         Class<?> entityClass = entity.getClass();
         // 获取表名
         String tableName = DataTableInfo.getTableName(entityClass);
@@ -199,7 +201,6 @@ public class KenewstarJdbcExecutor implements JdbcExecutor{
         StringBuilder sql = new StringBuilder("insert into " + tableName);
         sql.append('(');
         int index=0;
-        int columnSize = columnNames.size();
         StringBuilder valSql = new StringBuilder(" values(");
         for (String columnName : columnNames.keySet()) {
             sql.append(columnName).append(',');
@@ -300,10 +301,7 @@ public class KenewstarJdbcExecutor implements JdbcExecutor{
         String tableName = DataTableInfo.getTableName(entityClass);
         // 获取id名
         String idName = DataTableInfo.getIdName(entityClass);
-        // 获取所有列名
-        Map<String, String> columnNames = DataTableInfo.getColumnNames(entityClass);
 
-        //==============构建SQL语句======================//
         // example : select * from tableName where id=?
         StringBuilder sql = new StringBuilder("select * from " + tableName);
         sql.append(" where ").append(idName).append("=?");
@@ -425,10 +423,10 @@ public class KenewstarJdbcExecutor implements JdbcExecutor{
             // 判断是升序或降序
             if (Objects.equals(sort.getOrder(),Sort.DESC)){
                 // 排序为降序
-                sql.append(columnName+" desc,");
+                sql.append(columnName).append(" desc,");
             }else {
                 // 升序
-                sql.append(columnName+" asc,");
+                sql.append(columnName).append(" asc,");
             }
 
         }
@@ -443,7 +441,7 @@ public class KenewstarJdbcExecutor implements JdbcExecutor{
 
 
     @Override
-    public <T> Page<T> selectAll(Class<T> entityClass, PageCondition condition){
+    public <T> Page<T> selectAll(Class<T> entityClass, PageCondition condition) {
         // 根据分页中的排序条件查询所有
         List<T> list = selectAll(entityClass, condition.getSort());
 
@@ -461,25 +459,25 @@ public class KenewstarJdbcExecutor implements JdbcExecutor{
         // 设置每页记录数
         page.setPageSize(pageSize);
         // 设置总页数(总记录数/每页记录数[+1])
-        if(size%pageSize==0){
-            page.setTotalPages(size/pageSize);
+        if(size%pageSize == 0) {
+            page.setTotalPages(size / pageSize);
         }else {
-            page.setTotalPages(size/pageSize+1);
+            page.setTotalPages(size / pageSize+1);
         }
 
         // 判断页码是否非法
-        if (pageNumber<0||pageNumber>=page.getTotalPages()){
+        if (pageNumber < 0 || pageNumber >= page.getTotalPages()) {
             // 抛出页码非法异常
             throw new PageNumberIllegalException(
                     "the pageNumber parameter is error "+
-                    "pageNumber : "+pageNumber);
+                    "pageNumber : " + pageNumber);
         }
 
         // 取出分页的数据记录
-        int fromIndex = pageNumber*pageSize;
-        int toIndex = (pageNumber+1)*pageSize;
+        int fromIndex = pageNumber * pageSize;
+        int toIndex = (pageNumber + 1) * pageSize;
         // 判断是否是最后一页
-        if (condition.getPageNumber()==page.getTotalPages()-1){
+        if (condition.getPageNumber() == page.getTotalPages() - 1) {
             // 最后一页
             page.setContents(list.subList(fromIndex,size));
         }else {
