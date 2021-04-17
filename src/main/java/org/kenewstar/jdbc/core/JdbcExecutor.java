@@ -10,7 +10,7 @@ import java.util.List;
  * @date 2020-08-08
  * @version 1.0
  */
-public interface JdbcExecutor extends ConditionJdbcExecutor {
+public interface JdbcExecutor extends ConditionJdbcExecutor, BatchExecutor {
 
 
     /**

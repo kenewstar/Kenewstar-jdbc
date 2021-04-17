@@ -21,7 +21,7 @@ public class ConditionTest {
 
     @Before
     public void before() {
-        executor = JdbcExecutorFactory.getExecutor();
+        executor = JdbcExecutorFactory.getExecutor("prop/jdbc.properties");
     }
 
     @Test
@@ -77,13 +77,15 @@ public class ConditionTest {
 
     @Test
     public void test3() {
-        List<User> users = executor.selectList(User.class, sql ->
+        List<User> users = executor.selectList(User.class, sql -> {
                 sql.where()
                     .gt(User::getAge, 20)
                     .and()
-                    .eq(User::getName, "aaaa"));
-        users.forEach(user -> {
+                    .eq(User::getName, "aaaa");
+                });
+                users.forEach(user -> {
             System.out.println(user.getId());
         });
     }
+
 }

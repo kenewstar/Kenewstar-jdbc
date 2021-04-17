@@ -23,6 +23,10 @@ public class KenewstarStatement {
      * 使用本地线程声明连接
      */
     private final ThreadLocal<Connection> connection;
+    /**
+     * 执行数量
+     */
+    private static final int EXECUTOR_COUNT = 100;
 
     public KenewstarStatement() {
         dataSource = new ConnectionPool().getConnPool();
@@ -58,7 +62,7 @@ public class KenewstarStatement {
      * @param params 可变参数
      * @return 返回执行影响的行数
      */
-    public int preparedUpdateExecutor(String sql, Object...params) {
+    public int preparedUpdateExecutor(String sql, Object ...params) {
         PreparedStatement ps = null;
         // 获取一个连接
         Connection conn = getConnection();
@@ -82,12 +86,53 @@ public class KenewstarStatement {
     }
 
     /**
+     * 批量Sql执行器
+     * @param sql sql语句
+     * @param paramList 批量参数
+     * @return rows
+     */
+    public int preparedBatchExecutor(String sql, List<List<Object>> paramList) {
+        PreparedStatement ps = null;
+        // 获取一个连接
+        Connection conn = getConnection();
+        int count = paramList.size();
+        try {
+            // 预处理
+            ps = conn.prepareStatement(sql);
+            // 批量设置参数
+            for (int i = 1; i <= count; i++) {
+                // 获取参数
+                List<Object> params = paramList.get(i - 1);
+                for (int j = 1; j <= params.size(); j++) {
+                    ps.setObject(j, params.get(j - 1));
+                }
+                ps.addBatch();
+                if (i % EXECUTOR_COUNT == 0) {
+                    ps.executeBatch();
+                    ps.clearBatch();
+                }
+            }
+            // 执行剩余
+            if (count % EXECUTOR_COUNT != 0) {
+                ps.executeBatch();
+                ps.clearBatch();
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            close(null, ps);
+        }
+        return count;
+    }
+
+    /**
      * 查询执行器
      * @param sql SQL查询语句
      * @param params 查询条件参数
      * @return 返回查询结果集
      */
-    public List<Map<String,Object>> preparedSelectExecutor(String sql, Object...params) {
+    public List<Map<String,Object>> preparedSelectExecutor(String sql, Object ...params) {
         PreparedStatement ps = null;
         ResultSet rs = null;
         // 获取一个连接

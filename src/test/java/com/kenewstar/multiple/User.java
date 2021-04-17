@@ -66,4 +66,10 @@ public class User {
     public void setDeptId(Integer deptId) {
         this.deptId = deptId;
     }
+
+    public User(Integer id, String name, Integer age) {
+        this.id = id;
+        this.name = name;
+        this.age = age;
+    }
 }
