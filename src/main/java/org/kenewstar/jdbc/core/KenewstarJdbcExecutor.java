@@ -1,5 +1,7 @@
 package org.kenewstar.jdbc.core;
 
+import org.kenewstar.jdbc.core.sql.Sql;
+import org.kenewstar.jdbc.core.sql.SqlKeyWord;
 import org.kenewstar.jdbc.exception.PageNumberIllegalException;
 import org.kenewstar.jdbc.transaction.JdbcTransaction;
 import org.kenewstar.jdbc.transaction.Transaction;
@@ -545,4 +547,46 @@ public class KenewstarJdbcExecutor extends CommonExecutor {
         return updateEntity(sql.toString(), paramsArray);
     }
 
+    @Override
+    public int insertSelective(Object entity) {
+        // 获取实体类
+        Class<?> entityClass = entity.getClass();
+        // 获取表名
+        String tableName = DataTableInfo.getTableName(entityClass);
+        // 获取属性名列名映射
+        Map<String, String> fieldNameAndColumnName = DataTableInfo.getFieldNameAndColumnName(entityClass);
+
+        StringBuilder sql = new StringBuilder(SqlKeyWord.INSERT);
+        sql.append(SqlKeyWord.INTO)
+           .append(tableName).append(SqlKeyWord.LEFT_BRACKETS);
+        // 获取所有属性
+        Field[] fields = entityClass.getDeclaredFields();
+
+        StringBuilder valus = new StringBuilder(SqlKeyWord.VALUES);
+        valus.append(SqlKeyWord.LEFT_BRACKETS);
+
+        List<Object> params = new ArrayList<>(fieldNameAndColumnName.size());
+        try {
+            for (Field field : fields) {
+                field.setAccessible(true);
+                Object o = field.get(entity);
+                if (Objects.nonNull(o)) {
+                    sql.append(fieldNameAndColumnName.get(field.getName()))
+                       .append(SqlKeyWord.COMMA);
+                    valus.append(SqlKeyWord.PLACEHOLDER)
+                         .append(SqlKeyWord.COMMA);
+                    params.add(o);
+                }
+            }
+            sql.setCharAt(sql.length() - 1, SqlKeyWord.RIGHT_BRACKETS_CHAR);
+            valus.setCharAt(valus.length() - 1, SqlKeyWord.RIGHT_BRACKETS_CHAR);
+            sql.append(valus);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        int row = statement.preparedUpdateExecutor(sql.toString(), params.toArray(new Object[]{}));
+        // 打印SQL语句
+        log.info("Executed SQL ===> "+sql.toString());
+        return row;
+    }
 }

@@ -159,7 +159,12 @@ public interface JdbcExecutor extends ConditionJdbcExecutor, BatchExecutor {
      */
     int updateByIdSelective(Object entity);
 
-
+    /**
+     * 可选插入
+     * @param entity 插入对象
+     * @return row
+     */
+    int insertSelective(Object entity);
 
 
 }
