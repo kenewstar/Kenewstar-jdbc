@@ -6,6 +6,7 @@ import org.kenewstar.jdbc.util.KenewstarUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 
 /**
@@ -31,6 +32,10 @@ public final class Sql {
 
     public List<Object> getParams() {
         return params;
+    }
+    private Sql commonEq() {
+        sql.append(" 1 = 1 ");
+        return this;
     }
 
     /**
@@ -62,6 +67,9 @@ public final class Sql {
      * @return this
      */
     public <T, V> Sql eq(FunctionColumn<T, V> column, Object value) {
+        if (Objects.isNull(value) || "".equals(value)) {
+            return commonEq();
+        }
         sql.append(FunctionUtil.getColumnName(column))
            .append(SqlKeyWord.EQ)
            .append(SqlKeyWord.PLACEHOLDER);
@@ -79,6 +87,9 @@ public final class Sql {
      * @return this
      */
     public <T, V> Sql ne(FunctionColumn<T, V> column, Object value) {
+        if (Objects.isNull(value) || "".equals(value)) {
+            return commonEq();
+        }
         sql.append(FunctionUtil.getColumnName(column))
            .append(SqlKeyWord.NE)
            .append(SqlKeyWord.PLACEHOLDER);
@@ -96,6 +107,9 @@ public final class Sql {
      * @return this
      */
     public <T, V> Sql lt(FunctionColumn<T, V> column, Object value) {
+        if (Objects.isNull(value) || "".equals(value)) {
+            return commonEq();
+        }
         sql.append(FunctionUtil.getColumnName(column))
            .append(SqlKeyWord.LT)
            .append(SqlKeyWord.PLACEHOLDER);
@@ -112,6 +126,9 @@ public final class Sql {
      * @return this
      */
     public <T, V> Sql le(FunctionColumn<T, V> column, Object value) {
+        if (Objects.isNull(value) || "".equals(value)) {
+            return commonEq();
+        }
         sql.append(FunctionUtil.getColumnName(column))
            .append(SqlKeyWord.LE)
            .append(SqlKeyWord.PLACEHOLDER);
@@ -129,6 +146,9 @@ public final class Sql {
      * @return this
      */
     public <T, V> Sql gt(FunctionColumn<T, V> column, Object value) {
+        if (Objects.isNull(value) || "".equals(value)) {
+            return commonEq();
+        }
         sql.append(FunctionUtil.getColumnName(column))
            .append(SqlKeyWord.GT)
            .append(SqlKeyWord.PLACEHOLDER);
@@ -145,6 +165,9 @@ public final class Sql {
      * @return this
      */
     public <T, V> Sql ge(FunctionColumn<T, V> column, Object value) {
+        if (Objects.isNull(value) || "".equals(value)) {
+            return commonEq();
+        }
         sql.append(FunctionUtil.getColumnName(column))
            .append(SqlKeyWord.GE)
            .append(SqlKeyWord.PLACEHOLDER);
@@ -163,6 +186,7 @@ public final class Sql {
      * @return this
      */
     public <T, V> Sql between(FunctionColumn<T, V> column, Object v1, Object v2) {
+
         sql.append(FunctionUtil.getColumnName(column))
            .append(SqlKeyWord.BETWEEN)
            .append(SqlKeyWord.PLACEHOLDER)
