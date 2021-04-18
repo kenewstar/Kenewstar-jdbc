@@ -141,6 +141,7 @@ public interface JdbcExecutor extends ConditionJdbcExecutor, BatchExecutor {
 
     /**
      * 分页查询(可以先排序再分页) 即将排序的结果进行分页操作
+     * 只适合与少量数据分页，大数据量场景下不适用
      * @param entityClass 类
      * @param condition 分页查询条件
      * @param <T> 泛型

@@ -443,6 +443,7 @@ public class KenewstarJdbcExecutor extends CommonExecutor {
 
 
     @Override
+    @Deprecated
     public <T> Page<T> selectAll(Class<T> entityClass, PageCondition condition) {
         // 根据分页中的排序条件查询所有
         List<T> list = selectAll(entityClass, condition.getSort());
