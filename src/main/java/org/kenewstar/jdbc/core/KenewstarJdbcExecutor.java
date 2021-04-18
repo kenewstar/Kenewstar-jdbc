@@ -524,7 +524,7 @@ public class KenewstarJdbcExecutor extends CommonExecutor {
                 o = field.get(entity);
                 if (Objects.nonNull(o) && !Objects.equals(idFieldName, field.getName())) {
                     sql.append(columnName)
-                       .append("=? ");
+                       .append("=? ,");
                     params[index ++] = o;
                 }
                 if (Objects.equals(idFieldName, field.getName())) {
@@ -537,6 +537,7 @@ public class KenewstarJdbcExecutor extends CommonExecutor {
         if (index == 0) {
             return 0;
         }
+        sql.setCharAt(sql.length() - 1, SqlKeyWord.BLANK_CHAR);
         sql.append("where ").append(idName).append("=?");
         params[index ++] = idValue;
 
