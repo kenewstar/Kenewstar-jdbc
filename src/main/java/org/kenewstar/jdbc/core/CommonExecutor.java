@@ -2,7 +2,10 @@ package org.kenewstar.jdbc.core;
 
 import org.kenewstar.jdbc.annotation.OfTable;
 import org.kenewstar.jdbc.core.factory.SqlFactory;
+import org.kenewstar.jdbc.core.page.Page;
+import org.kenewstar.jdbc.core.page.PageCondition;
 import org.kenewstar.jdbc.core.sql.Sql;
+import org.kenewstar.jdbc.core.sql.SqlFragment;
 import org.kenewstar.jdbc.core.sql.SqlKeyWord;
 import org.kenewstar.jdbc.function.MapTo;
 import org.kenewstar.jdbc.util.Assert;
@@ -19,7 +22,7 @@ import java.util.logging.Logger;
  * @version 1.0
  * @date 2021/4/1
  */
-public abstract class CommonExecutor implements JdbcExecutor {
+public abstract class CommonExecutor implements JdbcExecutor, SqlFragment {
 
     private static final Logger logger = Logger.getLogger("common");
 
@@ -64,7 +67,7 @@ public abstract class CommonExecutor implements JdbcExecutor {
 
     @Override
     public <T> List<T> selectList(Class<?> fromClass , Class<T> resultType, MapTo mapTo) {
-        List<T> result;
+
         Sql sql = SqlFactory.getSql();
         sql.getSql().append(resultType(resultType));
         // from user
@@ -72,10 +75,11 @@ public abstract class CommonExecutor implements JdbcExecutor {
                .append(KenewstarUtil.getTableName(fromClass))
                .append(SqlKeyWord.BLANK);
         mapTo.conditionSql(sql);
+
         // 执行sql
         List<Map<String, Object>> maps
                 = statement.preparedSelectExecutor(sql.getSql().toString(), sql.getParams().toArray(new Object[]{}));
-        result = new ArrayList<>(Objects.isNull(maps) ? 0 : maps.size());
+        List<T> result = new ArrayList<>(maps.size());
         // 获取所有返回类型的属性
         Field[] fields = resultType.getDeclaredFields();
         maps.forEach(resultMap -> {
@@ -99,44 +103,39 @@ public abstract class CommonExecutor implements JdbcExecutor {
 
     @Override
     public <T> List<T> selectList(Class<T> entityClass, MapTo mapTo) {
-        Sql sql = SqlFactory.getSql();
-        // 获取表名
-        String tableName = DataTableInfo.getTableName(entityClass);
-        Map<String, String> columnNames = DataTableInfo.getColumnNames(entityClass);
-
-        sql.getSql().append(SqlKeyWord.SELECT);
-        for (String columnName : columnNames.keySet()) {
-            sql.getSql().append(columnName)
-                   .append(SqlKeyWord.COMMA);
-        }
-        sql.getSql().setCharAt(sql.getSql().length() - 1, SqlKeyWord.BLANK_CHAR);
-        sql.getSql().append(SqlKeyWord.FROM)
-               .append(tableName);
+        // 构建Sql前缀对象
+        Sql sql = buildSelectSqlFragment(entityClass);
         // 组装条件
         mapTo.conditionSql(sql);
+        // 返回结果
+        return sqlResultExecutor(sql, entityClass);
+    }
+
+    @Override
+    public <T> Page<T> selectList(Class<T> entityClass, MapTo mapTo, PageCondition condition) {
+        // 构建Sql select 片段
+        Sql sql = buildSelectSqlFragment(entityClass);
+        // 构建 count(*) 查询片段
+        Sql countSql = buildCountSqlFragment(entityClass);
+        // 构建sql查询条件
+        mapTo.conditionSql(sql);
+        mapTo.conditionSql(countSql);
+        // 分页结果对象
+        Page<T> pageList = new Page<>(condition.getPageNumber(), condition.getPageSize());
+
+        // 构建sql 分页
+        buildPageSqlFragment(sql, pageList.getPageNum(), pageList.getPageSize());
+
+        // 设置总记录数
+        pageList.setTotal(sqlCountExecutor(countSql));
         // 执行查询
-        List<Map<String, Object>> maps =
-                statement.preparedSelectExecutor(sql.getSql().toString(), sql.getParams().toArray(new Object[]{}));
-        // 打印SQL语句
-        logger.info("Executed SQL ===> "+sql.getSql().toString());
-        List<T> result = new ArrayList<>(maps.size());
+        List<T> result = sqlResultExecutor(sql, entityClass);
+        pageList.setRows(result);
 
-        maps.forEach(map -> {
-            try {
-                T t = entityClass.newInstance();
-                for (Map.Entry<String, Object> mapEntry : map.entrySet()) {
-                    String fieldName = columnNames.get(mapEntry.getKey());
-                    Field field = entityClass.getDeclaredField(fieldName);
-                    field.setAccessible(Boolean.TRUE);
-                    field.set(t, mapEntry.getValue());
-                }
-                result.add(t);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-        });
-        return result;
+        long pages = pageList.getTotal() / pageList.getPageSize();
+        pageList.setPages(pageList.getTotal() % pageList.getPageSize() == 0 ? pages : pages + 1);
+        // 返回分页结果
+        return pageList;
     }
 
     @Override
@@ -238,6 +237,54 @@ public abstract class CommonExecutor implements JdbcExecutor {
         // 打印SQL语句
         logger.info("Executed SQL ===> "+sql.toString());
         return rows;
+    }
+
+    /**
+     * 记录数统计执行器
+     * @param sql sql对象
+     * @return count 获取记录总数
+     */
+    private long sqlCountExecutor(Sql sql) {
+        List<Map<String, Object>> count =
+                statement.preparedSelectExecutor(sql.getSql().toString(),
+                        sql.getParams().toArray(new Object[]{}));
+        return (long) count.get(0).get("count(*)");
+    }
+
+    /**
+     * Sql执行返回结果映射执行器
+     * @param sql sql对象
+     * @param entityClass 实体类
+     * @param <T> t
+     * @return list
+     */
+    private <T> List<T> sqlResultExecutor(Sql sql, Class<T> entityClass) {
+        // 打印Sql语句
+        logger.info("Executed SQL ===> "+sql.getSql().toString());
+        // 执行查询
+        List<Map<String, Object>> maps =
+                statement.preparedSelectExecutor(sql.getSql().toString(),
+                        sql.getParams().toArray(new Object[]{}));
+        // 结果
+        List<T> result = new ArrayList<>(maps.size());
+
+        Map<String, String> columnNames = DataTableInfo.getColumnNames(entityClass);
+        maps.forEach(map -> {
+            try {
+                T t = entityClass.newInstance();
+                for (Map.Entry<String, Object> mapEntry : map.entrySet()) {
+                    String fieldName = columnNames.get(mapEntry.getKey());
+                    Field field = entityClass.getDeclaredField(fieldName);
+                    field.setAccessible(Boolean.TRUE);
+                    field.set(t, mapEntry.getValue());
+                }
+                result.add(t);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        });
+        return result;
     }
 }
 

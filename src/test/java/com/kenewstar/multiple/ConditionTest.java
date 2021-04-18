@@ -7,6 +7,8 @@ import org.kenewstar.jdbc.core.CommonExecutor;
 import org.kenewstar.jdbc.core.JdbcExecutor;
 import org.kenewstar.jdbc.core.KenewstarJdbcExecutor;
 import org.kenewstar.jdbc.core.factory.JdbcExecutorFactory;
+import org.kenewstar.jdbc.core.page.Page;
+import org.kenewstar.jdbc.core.page.PageCondition;
 import org.kenewstar.jdbc.util.KenewstarUtil;
 
 import java.util.List;
@@ -83,9 +85,27 @@ public class ConditionTest {
                     .and()
                     .eq(User::getName, "aaaa");
                 });
-                users.forEach(user -> {
+        users.forEach(user -> {
             System.out.println(user.getId());
         });
+    }
+
+    @Test
+    public void test4() {
+        long count = executor.count(new User(null, "a",12));
+        System.out.println(count);
+
+    }
+
+    @Test
+    public void test5() {
+        PageCondition condition = new PageCondition();
+        condition.setPageNumber(1);
+        condition.setPageSize(10);
+        Page<User> users = executor.selectList(User.class, sql -> {
+            sql.where().eq(User::getAge,-1);
+        }, condition);
+        System.out.println(users);
     }
 
 }

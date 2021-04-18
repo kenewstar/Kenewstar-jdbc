@@ -1,4 +1,6 @@
-package org.kenewstar.jdbc.core;
+package org.kenewstar.jdbc.core.page;
+
+import org.kenewstar.jdbc.core.Sort;
 
 import java.util.List;
 

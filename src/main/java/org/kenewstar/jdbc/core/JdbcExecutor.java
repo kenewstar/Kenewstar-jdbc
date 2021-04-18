@@ -1,8 +1,15 @@
 package org.kenewstar.jdbc.core;
 
+import org.kenewstar.jdbc.core.factory.SqlFactory;
+import org.kenewstar.jdbc.core.page.Page;
+import org.kenewstar.jdbc.core.page.PageCondition;
+import org.kenewstar.jdbc.core.sql.Sql;
+import org.kenewstar.jdbc.core.sql.SqlKeyWord;
 import org.kenewstar.jdbc.transaction.Transaction;
+import org.kenewstar.jdbc.util.DataTableInfo;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Jdbc执行器接口
@@ -166,6 +173,8 @@ public interface JdbcExecutor extends ConditionJdbcExecutor, BatchExecutor {
      * @return row
      */
     int insertSelective(Object entity);
+
+
 
 
 }

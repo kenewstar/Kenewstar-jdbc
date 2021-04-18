@@ -1,7 +1,7 @@
 # Kenewstar-jdbc
-本框架是对jdbc进行封装的一个ORM框架
+***Kenewstar-jdbc*** 框架是对 ***JDBC*** 进行封装的一个 ***ORM*** 框架
 
-打包命令：mvn clean install -Dmaven.test.skip=true
+打包命令：***mvn clean install -Dmaven.test.skip***
 
 ## kenewstar-jdbc-0.1
 date : 2020-08-08
@@ -21,6 +21,7 @@ date : 2021-04-05
 ## kenewstar-jdbc-0.4
 date : 2021-04-17
 ##### 1) 新增批量执行操作
+##### 2) 新增分页查询操作
 
 
 # 声明式事务

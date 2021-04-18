@@ -4,6 +4,8 @@ import org.kenewstar.jdbc.annotation.Column;
 import org.kenewstar.jdbc.annotation.Id;
 import org.kenewstar.jdbc.annotation.Table;
 
+import java.util.UUID;
+
 /**
  * @author xinke.huang@hand-china.com
  * @version 1.0
@@ -72,4 +74,18 @@ public class User {
         this.name = name;
         this.age = age;
     }
+    public User() {}
+
+    @Override
+    public String toString() {
+
+        return "User{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", age=" + age +
+                ", deptId=" + deptId +
+                ", companyId=" + companyId +
+                '}';
+    }
+
 }

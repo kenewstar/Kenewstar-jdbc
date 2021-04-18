@@ -1,5 +1,7 @@
 package org.kenewstar.jdbc.core;
 
+import org.kenewstar.jdbc.core.page.Page;
+import org.kenewstar.jdbc.core.page.PageCondition;
 import org.kenewstar.jdbc.function.MapTo;
 
 import java.util.List;
@@ -23,11 +25,22 @@ public interface ConditionJdbcExecutor {
 
     /**
      * 单表条件查询
+     * 支持动态条件查询
      * @param entityClass 实体类
      * @param mapTo 条件SQL构造对象
      * @param <T> t
      * @return list
      */
     <T> List<T> selectList(Class<T> entityClass, MapTo mapTo);
+
+    /**
+     * 单表条件查询--分页查询
+     * @param entityClass 实体类
+     * @param mapTo 条件SQL构造对象
+     * @param condition 分页条件
+     * @param <T> t
+     * @return page 分页结果
+     */
+    <T> Page<T> selectList(Class<T> entityClass, MapTo mapTo, PageCondition condition);
 
 }

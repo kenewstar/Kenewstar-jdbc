@@ -29,6 +29,8 @@ public class SqlKeyWord {
     public static final String ASC    = " asc ";
     public static final String LIKE   = " like ";
     public static final String COUNT  = " count(*) ";
+    public static final String LIMIT  = " limit ";
+    public static final String OFFSET = " offset ";
     public static final String HAVING = " having ";
     public static final String NOT_BETWEEN = " not between ";
     public static final String BETWEEN  = " between ";

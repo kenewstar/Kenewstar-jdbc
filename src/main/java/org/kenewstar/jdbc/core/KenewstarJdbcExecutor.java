@@ -1,6 +1,7 @@
 package org.kenewstar.jdbc.core;
 
-import org.kenewstar.jdbc.core.sql.Sql;
+import org.kenewstar.jdbc.core.page.Page;
+import org.kenewstar.jdbc.core.page.PageCondition;
 import org.kenewstar.jdbc.core.sql.SqlKeyWord;
 import org.kenewstar.jdbc.exception.PageNumberIllegalException;
 import org.kenewstar.jdbc.transaction.JdbcTransaction;
@@ -456,20 +457,20 @@ public class KenewstarJdbcExecutor extends CommonExecutor {
         int pageNumber = condition.getPageNumber();
 
         // 设置总记录数
-        page.setTotalRecords(size);
+        page.setTotal(size);
         // 设置当前页码
-        page.setCurrentPage(pageNumber);
+        page.setPageNum(pageNumber);
         // 设置每页记录数
         page.setPageSize(pageSize);
         // 设置总页数(总记录数/每页记录数[+1])
-        if(size%pageSize == 0) {
-            page.setTotalPages(size / pageSize);
+        if(size % pageSize == 0) {
+            page.setPages(size / pageSize);
         }else {
-            page.setTotalPages(size / pageSize+1);
+            page.setPages(size / pageSize+1);
         }
 
         // 判断页码是否非法
-        if (pageNumber < 0 || pageNumber >= page.getTotalPages()) {
+        if (pageNumber < 0 || pageNumber >= page.getTotal()) {
             // 抛出页码非法异常
             throw new PageNumberIllegalException(
                     "the pageNumber parameter is error "+
@@ -480,12 +481,12 @@ public class KenewstarJdbcExecutor extends CommonExecutor {
         int fromIndex = pageNumber * pageSize;
         int toIndex = (pageNumber + 1) * pageSize;
         // 判断是否是最后一页
-        if (condition.getPageNumber() == page.getTotalPages() - 1) {
+        if (condition.getPageNumber() == page.getTotal() - 1) {
             // 最后一页
-            page.setContents(list.subList(fromIndex,size));
+            page.setRows(list.subList(fromIndex,size));
         }else {
             // 非最后一页
-            page.setContents(list.subList(fromIndex,toIndex));
+            page.setRows(list.subList(fromIndex,toIndex));
         }
         // 返回分页结果
         return page;
