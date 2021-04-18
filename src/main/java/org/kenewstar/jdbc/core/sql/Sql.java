@@ -33,6 +33,11 @@ public final class Sql {
     public List<Object> getParams() {
         return params;
     }
+
+    /**
+     * 构造 1=1
+     * @return this
+     */
     private Sql commonEq() {
         sql.append(" 1 = 1 ");
         return this;
@@ -67,14 +72,26 @@ public final class Sql {
      * @return this
      */
     public <T, V> Sql eq(FunctionColumn<T, V> column, Object value) {
-        if (Objects.isNull(value) || "".equals(value)) {
-            return commonEq();
-        }
         sql.append(FunctionUtil.getColumnName(column))
            .append(SqlKeyWord.EQ)
            .append(SqlKeyWord.PLACEHOLDER);
         params.add(value);
         return this;
+    }
+
+    /**
+     *  and column = ?
+     * @param column 列名
+     * @param value 值
+     * @param <T> t
+     * @param <V> v
+     * @return this
+     */
+    public <T, V> Sql andEq(FunctionColumn<T, V> column, Object value) {
+        if (Objects.isNull(value) || "".equals(value)) {
+            return this;
+        }
+        return and().eq(column, value);
     }
 
     /**
@@ -87,14 +104,27 @@ public final class Sql {
      * @return this
      */
     public <T, V> Sql ne(FunctionColumn<T, V> column, Object value) {
-        if (Objects.isNull(value) || "".equals(value)) {
-            return commonEq();
-        }
         sql.append(FunctionUtil.getColumnName(column))
            .append(SqlKeyWord.NE)
            .append(SqlKeyWord.PLACEHOLDER);
         params.add(value);
         return this;
+    }
+
+    /**
+     * 不等于
+     * and column <> ?
+     * @param column 列名
+     * @param value 值
+     * @param <T> t
+     * @param <V> v
+     * @return this
+     */
+    public <T, V> Sql andNe(FunctionColumn<T, V> column, Object value) {
+        if (Objects.isNull(value) || "".equals(value)) {
+            return this;
+        }
+        return and().ne(column, value);
     }
 
     /**
@@ -107,14 +137,26 @@ public final class Sql {
      * @return this
      */
     public <T, V> Sql lt(FunctionColumn<T, V> column, Object value) {
-        if (Objects.isNull(value) || "".equals(value)) {
-            return commonEq();
-        }
         sql.append(FunctionUtil.getColumnName(column))
            .append(SqlKeyWord.LT)
            .append(SqlKeyWord.PLACEHOLDER);
         params.add(value);
         return this;
+    }
+    /**
+     * 小于
+     * and age < 20
+     * @param column 列名
+     * @param value 值
+     * @param <T> t
+     * @param <V> v
+     * @return this
+     */
+    public <T, V> Sql andLt(FunctionColumn<T, V> column, Object value) {
+        if (Objects.isNull(value) || "".equals(value)) {
+            return this;
+        }
+        return and().lt(column, value);
     }
 
     /**
@@ -126,14 +168,26 @@ public final class Sql {
      * @return this
      */
     public <T, V> Sql le(FunctionColumn<T, V> column, Object value) {
-        if (Objects.isNull(value) || "".equals(value)) {
-            return commonEq();
-        }
         sql.append(FunctionUtil.getColumnName(column))
            .append(SqlKeyWord.LE)
            .append(SqlKeyWord.PLACEHOLDER);
         params.add(value);
         return this;
+    }
+    /**
+     * 小于等于
+     * and column <= ?
+     * @param column 列名
+     * @param value 值
+     * @param <T> t
+     * @param <V> v
+     * @return this
+     */
+    public <T, V> Sql andLe(FunctionColumn<T, V> column, Object value) {
+        if (Objects.isNull(value) || "".equals(value)) {
+            return this;
+        }
+        return and().le(column, value);
     }
 
     /**
@@ -146,14 +200,26 @@ public final class Sql {
      * @return this
      */
     public <T, V> Sql gt(FunctionColumn<T, V> column, Object value) {
-        if (Objects.isNull(value) || "".equals(value)) {
-            return commonEq();
-        }
         sql.append(FunctionUtil.getColumnName(column))
            .append(SqlKeyWord.GT)
            .append(SqlKeyWord.PLACEHOLDER);
         params.add(value);
         return this;
+    }
+    /**
+     * 大于
+     * and age > 20
+     * @param column 列名
+     * @param value 值
+     * @param <T> t
+     * @param <V> v
+     * @return this
+     */
+    public <T, V> Sql andGt(FunctionColumn<T, V> column, Object value) {
+        if (Objects.isNull(value) || "".equals(value)) {
+            return this;
+        }
+        return and().gt(column, value);
     }
 
     /**
@@ -165,14 +231,27 @@ public final class Sql {
      * @return this
      */
     public <T, V> Sql ge(FunctionColumn<T, V> column, Object value) {
-        if (Objects.isNull(value) || "".equals(value)) {
-            return commonEq();
-        }
         sql.append(FunctionUtil.getColumnName(column))
            .append(SqlKeyWord.GE)
            .append(SqlKeyWord.PLACEHOLDER);
         params.add(value);
         return this;
+    }
+
+    /**
+     * 大于等于
+     * and column >= ?
+     * @param column 列名
+     * @param value 值
+     * @param <T> t
+     * @param <V> v
+     * @return this
+     */
+    public <T, V> Sql andGe(FunctionColumn<T, V> column, Object value) {
+        if (Objects.isNull(value) || "".equals(value)) {
+            return this;
+        }
+        return and().ge(column, value);
     }
 
     /**
@@ -186,7 +265,6 @@ public final class Sql {
      * @return this
      */
     public <T, V> Sql between(FunctionColumn<T, V> column, Object v1, Object v2) {
-
         sql.append(FunctionUtil.getColumnName(column))
            .append(SqlKeyWord.BETWEEN)
            .append(SqlKeyWord.PLACEHOLDER)
@@ -196,6 +274,24 @@ public final class Sql {
         params.add(v2);
         return this;
     }
+    /**
+     * 范围值
+     * and age between v1 and v2
+     * @param column 列名
+     * @param v1 值1
+     * @param v2 值2
+     * @param <T> t
+     * @param <V> v
+     * @return this
+     */
+    public <T, V> Sql andBetween(FunctionColumn<T, V> column, Object v1, Object v2) {
+        if ((Objects.isNull(v1) || "".equals(v1)) &&
+            (Objects.isNull(v2) || "".equals(v2))) {
+            return this;
+        }
+        return and().between(column, v1, v2);
+    }
+
 
     /**
      * age not between v1 and v2
@@ -216,6 +312,23 @@ public final class Sql {
         params.add(v2);
         return this;
     }
+    /**
+     * 范围值
+     * and age not between v1 and v2
+     * @param column 列名
+     * @param v1 值1
+     * @param v2 值2
+     * @param <T> t
+     * @param <V> v
+     * @return this
+     */
+    public <T, V> Sql andNotBetween(FunctionColumn<T, V> column, Object v1, Object v2) {
+        if ((Objects.isNull(v1) || "".equals(v1)) &&
+                (Objects.isNull(v2) || "".equals(v2))) {
+            return this;
+        }
+        return and().notBetween(column, v1, v2);
+    }
 
     /**
      * 模糊查询[全模糊]
@@ -232,6 +345,21 @@ public final class Sql {
            .append(SqlKeyWord.PLACEHOLDER);
         params.add(SqlKeyWord.PERCENT_SIGN + value + SqlKeyWord.PERCENT_SIGN);
         return this;
+    }
+    /**
+     * 模糊查询[全模糊]
+     * and username like %kkk%
+     * @param column 列名
+     * @param value 值
+     * @param <T> t
+     * @param <V> v
+     * @return this
+     */
+    public <T, V> Sql andLike(FunctionColumn<T, V> column, Object value) {
+        if (Objects.isNull(value) || "".equals(value)) {
+            return this;
+        }
+        return and().like(column, value);
     }
 
     /**
@@ -253,6 +381,22 @@ public final class Sql {
     }
 
     /**
+     * 不匹配
+     * and not like .....
+     * @param column 列名
+     * @param value 值
+     * @param <T> t
+     * @param <V> v
+     * @return this
+     */
+    public <T, V> Sql andNotLike(FunctionColumn<T, V> column, Object value) {
+        if (Objects.isNull(value) || "".equals(value)) {
+            return this;
+        }
+        return and().notLike(column, value);
+    }
+
+    /**
      * 左模糊
      * username like %kkk
      * @param column 列名
@@ -270,6 +414,22 @@ public final class Sql {
     }
 
     /**
+     * 左模糊
+     * and username like %kkk
+     * @param column 列名
+     * @param value 值
+     * @param <T> t
+     * @param <V> v
+     * @return this
+     */
+    public <T, V> Sql andLikeLeft(FunctionColumn<T, V> column, Object value) {
+        if (Objects.isNull(value) || "".equals(value)) {
+            return this;
+        }
+        return and().likeLeft(column, value);
+    }
+
+    /**
      * 右模糊
      * username like kkk%
      * @param column 列名
@@ -284,6 +444,22 @@ public final class Sql {
            .append(SqlKeyWord.PLACEHOLDER);
         params.add(value + SqlKeyWord.PERCENT_SIGN);
         return this;
+    }
+
+    /**
+     * 右模糊
+     * and username like kkk%
+     * @param column 列名
+     * @param value 值
+     * @param <T> t
+     * @param <V> v
+     * @return this
+     */
+    public <T, V> Sql andLikeRight(FunctionColumn<T, V> column, Object value) {
+        if (Objects.isNull(value) || "".equals(value)) {
+            return this;
+        }
+        return and().likeRight(column, value);
     }
 
     /**
@@ -418,6 +594,15 @@ public final class Sql {
     public Sql where() {
         sql.append(SqlKeyWord.WHERE);
         return this;
+    }
+
+    /**
+     * where 1=1
+     * @return this
+     */
+    public Sql whereCommonEq() {
+        sql.append(SqlKeyWord.WHERE);
+        return commonEq();
     }
 
     /**

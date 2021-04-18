@@ -571,7 +571,7 @@ public class KenewstarJdbcExecutor extends CommonExecutor {
             for (Field field : fields) {
                 field.setAccessible(true);
                 Object o = field.get(entity);
-                if (Objects.nonNull(o)) {
+                if (Objects.nonNull(o) && !"".equals(o)) {
                     sql.append(fieldNameAndColumnName.get(field.getName()))
                        .append(SqlKeyWord.COMMA);
                     valus.append(SqlKeyWord.PLACEHOLDER)
