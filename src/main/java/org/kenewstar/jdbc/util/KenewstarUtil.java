@@ -2,6 +2,7 @@ package org.kenewstar.jdbc.util;
 
 import org.kenewstar.jdbc.annotation.Table;
 
+import java.lang.reflect.Field;
 import java.util.Objects;
 
 /**
@@ -27,6 +28,35 @@ public class KenewstarUtil {
                         clz.getSimpleName().substring(1);
         }
         return tableName;
+    }
+
+    /**
+     * 获取toString字符串
+     * @param obj 对象
+     * @return toString
+     */
+    public static String getToString(Object obj) {
+        Class<?> clazz = obj.getClass();
+        // 获取所有属性
+        Field[] fields = clazz.getDeclaredFields();
+
+        StringBuilder toString = new StringBuilder(clazz.getSimpleName());
+        toString.append('{');
+        try {
+            for (Field field : fields) {
+                field.setAccessible(true);
+                toString.append(field.getName())
+                        .append("=")
+                        .append(field.get(obj))
+                        .append(", ");
+
+            }
+            toString.setCharAt(toString.length() - 1, '}');
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+
+        return toString.toString();
     }
 
 

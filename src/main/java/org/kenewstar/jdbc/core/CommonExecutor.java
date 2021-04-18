@@ -66,7 +66,7 @@ public abstract class CommonExecutor implements JdbcExecutor, SqlFragment {
     }
 
     @Override
-    public <T> List<T> selectList(Class<?> fromClass , Class<T> resultType, MapTo mapTo) {
+    public <T> List<T> selectList(Class<?> fromClass, Class<T> resultType, MapTo mapTo) {
 
         Sql sql = SqlFactory.getSql();
         sql.getSql().append(resultType(resultType));
@@ -111,6 +111,7 @@ public abstract class CommonExecutor implements JdbcExecutor, SqlFragment {
         return sqlResultExecutor(sql, entityClass);
     }
 
+
     @Override
     public <T> Page<T> selectList(Class<T> entityClass, MapTo mapTo, PageCondition condition) {
         // 构建Sql select 片段
@@ -137,6 +138,7 @@ public abstract class CommonExecutor implements JdbcExecutor, SqlFragment {
         // 返回分页结果
         return pageList;
     }
+
 
     @Override
     public int batchDelete(Class<?> entityClass, List<?> ids) {
@@ -167,6 +169,7 @@ public abstract class CommonExecutor implements JdbcExecutor, SqlFragment {
         return rows;
     }
 
+
     @Override
     public int batchUpdate(List<?> paramList) {
         Assert.notNull(paramList);
@@ -183,6 +186,7 @@ public abstract class CommonExecutor implements JdbcExecutor, SqlFragment {
 
         return 0;
     }
+
 
     @Override
     public int batchInsert(List<?> paramList) {

@@ -20,7 +20,7 @@ import java.util.logging.Logger;
  */
 public class KenewstarJdbcExecutor extends CommonExecutor {
 
-    private static final Logger log = Logger.getLogger("executor");
+    private static final Logger log = Logger.getLogger("jdbcExecutor");
 
     public KenewstarJdbcExecutor() {
         super();
@@ -29,6 +29,30 @@ public class KenewstarJdbcExecutor extends CommonExecutor {
     public KenewstarJdbcExecutor(String configPath) {
         super(configPath);
     }
+
+    /**
+     * 将查询出来的Map<columnName,columnValue>映射转换为
+     * Map<fieldName,fieldValue>映射
+     * @param maps 列名与列值银蛇
+     * @return 返回属性名与属性值映射
+     */
+    private List<Map<String,Object>> getFieldNameAndValues(List<Map<String, Object>> maps,Class<?> entityClass){
+        // 获取所有列信息
+        Map<String, String> columnNames = DataTableInfo.getColumnNames(entityClass);
+        // 存放属性与属性值的映射
+        List<Map<String,Object>> fieldNameAndValues = new ArrayList<>(maps.size());
+        for (Map<String,Object> map : maps){
+            Map<String,Object> mapField = new HashMap<>(columnNames.size());
+            for (String columnName : columnNames.keySet()){
+                // 遍历设置属性与属性值的对应关系
+                mapField.put(columnNames.get(columnName),map.get(columnName));
+            }
+            // 添加到list中
+            fieldNameAndValues.add(mapField);
+        }
+        return fieldNameAndValues;
+    }
+
 
     @Override
     public Transaction getTransaction() {
@@ -148,31 +172,6 @@ public class KenewstarJdbcExecutor extends CommonExecutor {
         // 返回List结果集合
         return result;
     }
-
-    /**
-     * 将查询出来的Map<columnName,columnValue>映射转换为
-     * Map<fieldName,fieldValue>映射
-     * @param maps 列名与列值银蛇
-     * @return 返回属性名与属性值映射
-     */
-    private List<Map<String,Object>> getFieldNameAndValues(List<Map<String, Object>> maps,Class<?> entityClass){
-        // 获取所有列信息
-        Map<String, String> columnNames = DataTableInfo.getColumnNames(entityClass);
-        // 存放属性与属性值的映射
-        List<Map<String,Object>> fieldNameAndValues = new ArrayList<>(maps.size());
-        for (Map<String,Object> map : maps){
-            Map<String,Object> mapField = new HashMap<>(columnNames.size());
-            for (String columnName : columnNames.keySet()){
-                // 遍历设置属性与属性值的对应关系
-                mapField.put(columnNames.get(columnName),map.get(columnName));
-            }
-            // 添加到list中
-            fieldNameAndValues.add(mapField);
-        }
-        return fieldNameAndValues;
-    }
-
-    //========================封装 SQL 语句 START===============================//
 
 
     @Override
@@ -335,9 +334,6 @@ public class KenewstarJdbcExecutor extends CommonExecutor {
     }
 
 
-    //==========================封装 SQL 语句 END=========================//
-
-
     @Override
     public long count(Class<?> entityClass){
         // 获取表名与id名
@@ -360,6 +356,7 @@ public class KenewstarJdbcExecutor extends CommonExecutor {
         }
 
     }
+
 
     @Override
     public long count(Object entity) {
@@ -402,8 +399,6 @@ public class KenewstarJdbcExecutor extends CommonExecutor {
 
         return (long) maps.get(0).get("count");
     }
-
-    //================排序和分页==============================//
 
 
     @Override
@@ -494,11 +489,6 @@ public class KenewstarJdbcExecutor extends CommonExecutor {
     }
 
 
-
-
-    //======================================================//
-
-
     @Override
     public int updateByIdSelective(Object entity) {
         Class<?> entityClass = entity.getClass();
@@ -549,6 +539,7 @@ public class KenewstarJdbcExecutor extends CommonExecutor {
 
         return updateEntity(sql.toString(), paramsArray);
     }
+
 
     @Override
     public int insertSelective(Object entity) {

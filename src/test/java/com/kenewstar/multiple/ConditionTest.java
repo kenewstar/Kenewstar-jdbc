@@ -92,7 +92,7 @@ public class ConditionTest {
 
     @Test
     public void test4() {
-        long count = executor.count(new User(null, "a",12));
+        long count = executor.count(User.class);
         System.out.println(count);
 
     }
@@ -103,7 +103,7 @@ public class ConditionTest {
         condition.setPageNumber(1);
         condition.setPageSize(10);
         Page<User> users = executor.selectList(User.class, sql -> {
-            sql.where().eq(User::getAge,-1);
+            sql.where().eq(User::getAge,0);
         }, condition);
         System.out.println(users);
     }
