@@ -7,6 +7,8 @@ import org.kenewstar.jdbc.exception.PageNumberIllegalException;
 import org.kenewstar.jdbc.transaction.JdbcTransaction;
 import org.kenewstar.jdbc.transaction.Transaction;
 import org.kenewstar.jdbc.util.DataTableInfo;
+import org.kenewstar.jdbc.util.KenewstarUtil;
+
 import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.util.*;
@@ -36,16 +38,16 @@ public class KenewstarJdbcExecutor extends CommonExecutor {
      * @param maps 列名与列值银蛇
      * @return 返回属性名与属性值映射
      */
-    private List<Map<String,Object>> getFieldNameAndValues(List<Map<String, Object>> maps,Class<?> entityClass){
+    private List<Map<String,Object>> getFieldNameAndValues(List<Map<String, Object>> maps, Class<?> entityClass) {
         // 获取所有列信息
-        Map<String, String> columnNames = DataTableInfo.getColumnNames(entityClass);
+        Map<String, String> columnAndField = DataTableInfo.getColumnAndField(entityClass);
         // 存放属性与属性值的映射
         List<Map<String,Object>> fieldNameAndValues = new ArrayList<>(maps.size());
         for (Map<String,Object> map : maps){
-            Map<String,Object> mapField = new HashMap<>(columnNames.size());
-            for (String columnName : columnNames.keySet()){
+            Map<String,Object> mapField = new HashMap<>(columnAndField.size());
+            for (String columnName : columnAndField.keySet()){
                 // 遍历设置属性与属性值的对应关系
-                mapField.put(columnNames.get(columnName),map.get(columnName));
+                mapField.put(columnAndField.get(columnName), map.get(columnName));
             }
             // 添加到list中
             fieldNameAndValues.add(mapField);
@@ -80,14 +82,14 @@ public class KenewstarJdbcExecutor extends CommonExecutor {
 
 
     @Override
-    public <T> T selectEntityById(String sql, Class<T> entityClass, Integer id){
+    public <T> T selectEntityById(String sql, Class<T> entityClass, Integer id) {
         List<Map<String, Object>> maps = statement.preparedSelectExecutor(sql, id);
         // 查询结果为空
         if (maps.size() == 0){
             return null;
         }
         // 获取所有列信息
-        Map<String, String> columnNames = DataTableInfo.getColumnNames(entityClass);
+        Map<String, String> columnAndField = DataTableInfo.getColumnAndField(entityClass);
         // 获取所有属性信息
         Field[] fields = entityClass.getDeclaredFields();
         // 实例化该类对象
@@ -99,9 +101,9 @@ public class KenewstarJdbcExecutor extends CommonExecutor {
         }
         // 存放属性与属性值的映射
         Map<String,Object> fieldNameAndValue = new HashMap<>();
-        for (String columnName : columnNames.keySet()) {
+        for (String columnName : columnAndField.keySet()) {
             // 遍历设置属性与属性值的对应关系
-            fieldNameAndValue.put(columnNames.get(columnName),
+            fieldNameAndValue.put(columnAndField.get(columnName),
                                   maps.get(0).get(columnName));
         }
 
@@ -178,10 +180,10 @@ public class KenewstarJdbcExecutor extends CommonExecutor {
     public int insert(Object entity) {
         Class<?> entityClass = entity.getClass();
         // 获取表名
-        String tableName = DataTableInfo.getTableName(entityClass);
+        String tableName = KenewstarUtil.getTableName(entityClass);
         // 获取所有列名
-        Map<String, String> columnNames =
-                DataTableInfo.getColumnNames(entityClass);
+        Map<String, String> columnAndField =
+                DataTableInfo.getColumnAndField(entityClass);
         // 获取传入对象的属性以及get方法
         Field[] fields = entityClass.getDeclaredFields();
         // 存放属性名与属性值，以方便取用
@@ -204,10 +206,10 @@ public class KenewstarJdbcExecutor extends CommonExecutor {
         sql.append('(');
         int index=0;
         StringBuilder valSql = new StringBuilder(" values(");
-        for (String columnName : columnNames.keySet()) {
+        for (String columnName : columnAndField.keySet()) {
             sql.append(columnName).append(',');
             //通过列名获取属性名进行属性的匹配，将匹配的属性的值放入参数数组中
-            params[index++] = mapFields.get(columnNames.get(columnName));
+            params[index++] = mapFields.get(columnAndField.get(columnName));
 
             valSql.append("?,");
         }
@@ -227,7 +229,7 @@ public class KenewstarJdbcExecutor extends CommonExecutor {
     @Override
     public int deleteById(Integer id, Class<?> entityClass){
         // 获取表名
-        String tableName = DataTableInfo.getTableName(entityClass);
+        String tableName = KenewstarUtil.getTableName(entityClass);
         // 获取表的id
         String idName = DataTableInfo.getIdName(entityClass);
         //============构建SQL语句=================//
@@ -248,13 +250,13 @@ public class KenewstarJdbcExecutor extends CommonExecutor {
     public int updateById(Object entity){
         Class<?> entityClass = entity.getClass();
         // 获取表名
-        String tableName = DataTableInfo.getTableName(entityClass);
+        String tableName = KenewstarUtil.getTableName(entityClass);
         // 获取id名
         String idName = DataTableInfo.getIdName(entityClass);
         // 获取所有列名
-        Map<String, String> columnNames = DataTableInfo.getColumnNames(entityClass);
+        Map<String, String> columnAndField = DataTableInfo.getColumnAndField(entityClass);
         // 存放SQL所需参数
-        Object[] params = new Object[columnNames.size()];
+        Object[] params = new Object[columnAndField.size()];
         // 获取所有属性
         Field[] fields = entityClass.getDeclaredFields();
         // 存放属性名与属性值，以方便取用
@@ -272,15 +274,15 @@ public class KenewstarJdbcExecutor extends CommonExecutor {
         StringBuilder sql = new StringBuilder("update " + tableName + " set ");
         // 遍历所有列名
         int index = 0;
-        for (String columnName:columnNames.keySet()) {
+        for (String columnName:columnAndField.keySet()) {
             // 判断该列是否是id
             if (columnName.equals(idName)) {
                 // 列名中有一个是id名
-                params[columnNames.size() - 1] = mapFields.get(columnNames.get(columnName));
+                params[columnAndField.size() - 1] = mapFields.get(columnAndField.get(columnName));
             }else {
                 sql.append(columnName).append("=?,");
                 // 列名不是id名
-                params[index++]=mapFields.get(columnNames.get(columnName));
+                params[index++]=mapFields.get(columnAndField.get(columnName));
             }
         }
         System.out.println(Arrays.toString(params));
@@ -300,7 +302,7 @@ public class KenewstarJdbcExecutor extends CommonExecutor {
     @Override
     public <T> T selectById(Integer id, Class<T> entityClass){
         // 获取表名
-        String tableName = DataTableInfo.getTableName(entityClass);
+        String tableName = KenewstarUtil.getTableName(entityClass);
         // 获取id名
         String idName = DataTableInfo.getIdName(entityClass);
 
@@ -320,7 +322,7 @@ public class KenewstarJdbcExecutor extends CommonExecutor {
     @Override
     public <T> List<T> selectAll(Class<T> entityClass){
         // 获取表名
-        String tableName = DataTableInfo.getTableName(entityClass);
+        String tableName = KenewstarUtil.getTableName(entityClass);
         //==============构建SQL语句====================//
         // example : select * from tableName
         StringBuilder sql = new StringBuilder("select * from "+tableName);
@@ -337,7 +339,7 @@ public class KenewstarJdbcExecutor extends CommonExecutor {
     @Override
     public long count(Class<?> entityClass){
         // 获取表名与id名
-        String tableName = DataTableInfo.getTableName(entityClass);
+        String tableName = KenewstarUtil.getTableName(entityClass);
         String idName = DataTableInfo.getIdName(entityClass);
 
         // 构建SQL
@@ -363,9 +365,9 @@ public class KenewstarJdbcExecutor extends CommonExecutor {
         // 获取class
         Class<?> entityClass = entity.getClass();
         // 获取表名
-        String tableName = DataTableInfo.getTableName(entityClass);
+        String tableName = KenewstarUtil.getTableName(entityClass);
         // 获取列名
-        Map<String, String> columnNames = DataTableInfo.getColumnNames(entityClass);
+        Map<String, String> columnNames = DataTableInfo.getColumnAndField(entityClass);
         // 参数
         Object[] params = new Object[columnNames.size()];
         // select count(*) from tableName where columnName=? and ....
@@ -407,9 +409,9 @@ public class KenewstarJdbcExecutor extends CommonExecutor {
             return selectAll(entityClass);
         }
         // 获取表名
-        String tableName = DataTableInfo.getTableName(entityClass);
+        String tableName = KenewstarUtil.getTableName(entityClass);
         // 获取属性名与列名的集合
-        Map<String, String> fieldNameAndColumnName = DataTableInfo.getFieldNameAndColumnName(entityClass);
+        Map<String, String> fieldNameAndColumnName = DataTableInfo.getFieldAndColumn(entityClass);
         //===============构建SQL语句======================//
         // select * from tableName order by column1 desc|asc,[column2 desc|asc]...
         StringBuilder sql = new StringBuilder("select * from "+tableName+" order by ");
@@ -493,8 +495,8 @@ public class KenewstarJdbcExecutor extends CommonExecutor {
     public int updateByIdSelective(Object entity) {
         Class<?> entityClass = entity.getClass();
 
-        String tableName = DataTableInfo.getTableName(entityClass);
-        Map<String, String> columnNames = DataTableInfo.getColumnNames(entityClass);
+        String tableName = KenewstarUtil.getTableName(entityClass);
+        Map<String, String> columnNames = DataTableInfo.getColumnAndField(entityClass);
         // id列名
         String idName = DataTableInfo.getIdName(entityClass);
         // id属性名
@@ -546,9 +548,9 @@ public class KenewstarJdbcExecutor extends CommonExecutor {
         // 获取实体类
         Class<?> entityClass = entity.getClass();
         // 获取表名
-        String tableName = DataTableInfo.getTableName(entityClass);
+        String tableName = KenewstarUtil.getTableName(entityClass);
         // 获取属性名列名映射
-        Map<String, String> fieldNameAndColumnName = DataTableInfo.getFieldNameAndColumnName(entityClass);
+        Map<String, String> fieldNameAndColumnName = DataTableInfo.getFieldAndColumn(entityClass);
 
         StringBuilder sql = new StringBuilder(SqlKeyWord.INSERT);
         sql.append(SqlKeyWord.INTO)

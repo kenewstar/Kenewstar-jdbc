@@ -19,41 +19,6 @@ import java.util.*;
  */
 public class DataTableInfo {
 
-    /**
-     * 根据实体类的类类型获取表名
-     * 如果给了属性tableName的值，则使用赋予的值
-     * 如果没有给属性tableName赋值，则使用类名首字母小写为tableName的值
-     * @param clazz 类名
-     * @return 返回表名
-     */
-    public static String getTableName(Class<?> clazz) {
-        // 声明表名
-        String tableName;
-        // 1.判断clazz类上是否有@Table注解
-        boolean annoTable = clazz.isAnnotationPresent(Table.class);
-        if (annoTable){
-            // 类上存在该注解
-            // 获取该注解
-            Table table = clazz.getAnnotation(Table.class);
-            // 获取注解上属性的值
-            tableName = table.tableName();
-            // 判断注解属性值是否为空字符串
-            if ("".equals(tableName)) {
-                // 表名为空串，则将实体类名首字母改为小写，存入tableName属性中
-                // 获取类名
-                String clazzName = clazz.getSimpleName();
-                // 转换后的字符串赋给表名属性
-                tableName = clazzName.substring(0, 1).toLowerCase() + clazzName.substring(1);
-            }
-
-        }else {
-            // 类上不存在该注解
-            // 抛出实体类注解异常
-            throw new EntityAnnoException("the table annotation does not exist");
-        }
-        // 返回表的名称
-        return tableName;
-    }
 
     /**
      * 获取类的所有属性信息以及对应的数据表列名信息
@@ -61,10 +26,10 @@ public class DataTableInfo {
      * @param clazz 类对象
      * @return 返回列名与属性名的map对象
      */
-    public static Map<String,String> getColumnNames(Class<?> clazz) {
-        Map<String,String> columnAndField = new HashMap<>();
+    public static Map<String,String> getColumnAndField(Class<?> clazz) {
         // 获取类中所有声明的字段
         Field[] fields = clazz.getDeclaredFields();
+        Map<String,String> columnAndField = new HashMap<>(fields.length);
         // 遍历所有属性
         for (Field field : fields) {
             // 判断属性上是否有注解
@@ -91,7 +56,7 @@ public class DataTableInfo {
     /**
      * 获取该类中被@Id标注的属性，有且只有一个
      * @param clazz 类对象
-     * @return 返回id名称
+     * @return 返回id名称,数据库表的id列名
      */
     public static String getIdName(Class<?> clazz) {
 
@@ -140,12 +105,12 @@ public class DataTableInfo {
      * @param clazz 类
      * @return 返回映射集合
      */
-    public static Map<String,String> getFieldNameAndColumnName(Class<?> clazz) {
+    public static Map<String,String> getFieldAndColumn(Class<?> clazz) {
 
-        // 属性名为key 列名为value
-        Map<String,String> fieldNameAndColumnName = new HashMap<>();
         // 获取所有属性
         Field[] fields = clazz.getDeclaredFields();
+        // 属性名为key 列名为value
+        Map<String,String> fieldAndColumn = new HashMap<>(fields.length);
         // 遍历属性
         for (Field field : fields) {
             // 获取属性名
@@ -158,10 +123,10 @@ public class DataTableInfo {
                 columnName = fieldName;
             }
             // 将属性名与列名放入Map中
-            fieldNameAndColumnName.put(fieldName, columnName);
+            fieldAndColumn.put(fieldName, columnName);
         }
         // 返回属性与列的映射集合
-        return fieldNameAndColumnName;
+        return fieldAndColumn;
     }
 
     /**

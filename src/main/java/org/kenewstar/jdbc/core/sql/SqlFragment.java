@@ -2,8 +2,13 @@ package org.kenewstar.jdbc.core.sql;
 
 import org.kenewstar.jdbc.core.factory.SqlFactory;
 import org.kenewstar.jdbc.util.DataTableInfo;
+import org.kenewstar.jdbc.util.KenewstarUtil;
 
+import java.lang.reflect.Field;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.logging.Logger;
 
 /**
  * Sql片段
@@ -12,6 +17,65 @@ import java.util.Map;
  * @date 2021/4/18
  */
 public interface SqlFragment {
+    /**
+     * jul日志对象
+     */
+    Logger LOGGER = Logger.getLogger("SqlFragment");
+    /**
+     * <p>构建更新Sql对象
+     * 只构建对象属性值不为null的属性</p>
+     * <p> update tableName set columnName=?, ... where idName=? </p>
+     * @param entity 实体类对象
+     * @return Sql对象
+     */
+    default Sql buildUpdateSqlFragment(Object entity) {
+        // 获取Sql对象
+        Sql sql = SqlFactory.getSql();
+        StringBuilder updateSql = sql.getSql();
+        List<Object> updateParams = sql.getParams();
+        // 获取实体类
+        Class<?> entityClass = entity.getClass();
+        // 获取id
+        String idName = DataTableInfo.getIdName(entityClass);
+        Map<String, String> fieldAndColumn = DataTableInfo.getFieldNameAndColumnName(entityClass);
+        // 获取所有属性
+        Field[] fields = entityClass.getDeclaredFields();
+        // 组装Sql与参数
+        updateSql.append(SqlKeyWord.UPDATE)
+                 .append(SqlKeyWord.SET)
+                 .append(KenewstarUtil.getTableName(entityClass))
+                 .append(SqlKeyWord.BLANK);
+        try {
+            Object idValue = null;
+            for (Field field : fields) {
+                field.setAccessible(true);
+                // 获取属性值
+                Object value = field.get(entity);
+                if (Objects.equals(fieldAndColumn.get(field.getName()), idName)) {
+                    idValue = field.get(entity);
+                    continue;
+                }
+                if (Objects.nonNull(value) &&
+                    !Objects.equals(fieldAndColumn.get(field.getName()), idName)) {
+                    updateSql.append(fieldAndColumn.get(field.getName()))
+                             .append(SqlKeyWord.EQ)
+                             .append(SqlKeyWord.PLACEHOLDER)
+                             .append(SqlKeyWord.COMMA);
+                    updateParams.add(value);
+                }
+            }
+            updateSql.setCharAt(updateSql.length() - 1, SqlKeyWord.BLANK_CHAR);
+            updateSql.append(SqlKeyWord.WHERE)
+                     .append(idName)
+                     .append(SqlKeyWord.EQ)
+                     .append(SqlKeyWord.PLACEHOLDER);
+            updateParams.add(idValue);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        LOGGER.info("Execute Sql ===> " + sql.getSql().toString());
+        return sql;
+    }
 
     /**
      * 构建 select sql 片段

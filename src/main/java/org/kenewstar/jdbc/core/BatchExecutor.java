@@ -32,4 +32,12 @@ public interface BatchExecutor {
      */
     int batchInsert(List<?> paramList);
 
+    /**
+     * 批量插入
+     * @param paramList 参数集合
+     * @param count 每次执行多少条
+     * @return rows
+     */
+    int batchInsert(List<?> paramList, int count);
+
 }

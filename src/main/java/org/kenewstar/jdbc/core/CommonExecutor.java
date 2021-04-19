@@ -36,6 +36,11 @@ public abstract class CommonExecutor implements JdbcExecutor, SqlFragment {
         this.statement = new  KenewstarStatement(configPath);
     }
 
+    /**
+     * 多表返回类型
+     * @param resultType 返回类型
+     * @return sql
+     */
     private StringBuilder resultType(Class<?> resultType) {
         StringBuilder sql = new StringBuilder(SqlKeyWord.SELECT);
         // 获取所有属性
@@ -64,6 +69,55 @@ public abstract class CommonExecutor implements JdbcExecutor, SqlFragment {
         sql.setCharAt(sql.length() - 1, SqlKeyWord.BLANK_CHAR);
         return sql;
     }
+
+    /**
+     * 记录数统计执行器
+     * @param sql sql对象
+     * @return count 获取记录总数
+     */
+    private long sqlCountExecutor(Sql sql) {
+        List<Map<String, Object>> count =
+                statement.preparedSelectExecutor(sql.getSql().toString(),
+                        sql.getParams().toArray(new Object[]{}));
+        return (long) count.get(0).get("count(*)");
+    }
+
+    /**
+     * Sql执行返回结果映射执行器
+     * @param sql sql对象
+     * @param entityClass 实体类
+     * @param <T> t
+     * @return list
+     */
+    private <T> List<T> sqlResultExecutor(Sql sql, Class<T> entityClass) {
+        // 打印Sql语句
+        logger.info("Executed SQL ===> "+sql.getSql().toString());
+        // 执行查询
+        List<Map<String, Object>> maps =
+                statement.preparedSelectExecutor(sql.getSql().toString(),
+                        sql.getParams().toArray(new Object[]{}));
+        // 结果
+        List<T> result = new ArrayList<>(maps.size());
+
+        Map<String, String> columnAndField = DataTableInfo.getColumnAndField(entityClass);
+        maps.forEach(map -> {
+            try {
+                T t = entityClass.newInstance();
+                for (Map.Entry<String, Object> mapEntry : map.entrySet()) {
+                    String fieldName = columnAndField.get(mapEntry.getKey());
+                    Field field = entityClass.getDeclaredField(fieldName);
+                    field.setAccessible(Boolean.TRUE);
+                    field.set(t, mapEntry.getValue());
+                }
+                result.add(t);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        });
+        return result;
+    }
+
 
     @Override
     public <T> List<T> selectList(Class<?> fromClass, Class<T> resultType, MapTo mapTo) {
@@ -144,7 +198,7 @@ public abstract class CommonExecutor implements JdbcExecutor, SqlFragment {
     public int batchDelete(Class<?> entityClass, List<?> ids) {
         Assert.notNull(ids);
         // 获取表名
-        String tableName = DataTableInfo.getTableName(entityClass);
+        String tableName = KenewstarUtil.getTableName(entityClass);
         // 获取id名
         String idName = DataTableInfo.getIdName(entityClass);
         int rows;
@@ -163,7 +217,7 @@ public abstract class CommonExecutor implements JdbcExecutor, SqlFragment {
             paramList.add(params);
         }
         // 执行结果
-        rows = statement.preparedBatchExecutor(sql.toString(), paramList);
+        rows = statement.preparedBatchExecutor(sql.toString(), paramList, 0);
         // 打印SQL语句
         logger.info("Executed SQL ===> "+sql.toString());
         return rows;
@@ -176,20 +230,25 @@ public abstract class CommonExecutor implements JdbcExecutor, SqlFragment {
         if (paramList.isEmpty()) {
             return 0;
         }
-        Object obj = paramList.get(0);
-        // 表名
-        String tableName = DataTableInfo.getTableName(obj.getClass());
-        //
+        paramList.forEach(obj -> {
+            // 构建Sql对象
+            Sql sql = buildUpdateSqlFragment(obj);
+            statement.preparedUpdateExecutor(sql.getSql().toString(),
+                    sql.getParams().toArray(new Object[]{}));
 
-        StringBuilder sql = new StringBuilder(SqlKeyWord.UPDATE);
-        sql.append(SqlKeyWord.SET);
-
-        return 0;
+        });
+        return paramList.size();
     }
 
 
     @Override
     public int batchInsert(List<?> paramList) {
+        return batchInsert(paramList, 0);
+    }
+
+
+    @Override
+    public int batchInsert(List<?> paramList, int count) {
         Assert.notNull(paramList);
         if (paramList.isEmpty()) {
             return 0;
@@ -200,19 +259,19 @@ public abstract class CommonExecutor implements JdbcExecutor, SqlFragment {
         // 参数容器
         List<List<Object>> params = new ArrayList<>(paramList.size());
         // 表名
-        String tableName = DataTableInfo.getTableName(obj.getClass());
-        Map<String, String> columnNames = DataTableInfo.getColumnNames(obj.getClass());
+        String tableName = KenewstarUtil.getTableName(obj.getClass());
+        Map<String, String> columnAndField = DataTableInfo.getColumnAndField(obj.getClass());
 
         // 组装sql
         StringBuilder sql = new StringBuilder(SqlKeyWord.INSERT);
         sql.append(SqlKeyWord.INTO)
-           .append(tableName).append(SqlKeyWord.LEFT_BRACKETS);
+                .append(tableName).append(SqlKeyWord.LEFT_BRACKETS);
         StringBuilder values = new StringBuilder(SqlKeyWord.VALUES);
         values.append(SqlKeyWord.LEFT_BRACKETS);
 
         // 参数名
-        List<String> fieldNames = new ArrayList<>(columnNames.size());
-        columnNames.forEach((k, v) -> {
+        List<String> fieldNames = new ArrayList<>(columnAndField.size());
+        columnAndField.forEach((k, v) -> {
             fieldNames.add(v);
             sql.append(k).append(SqlKeyWord.COMMA);
             values.append(SqlKeyWord.PLACEHOLDER).append(SqlKeyWord.COMMA);
@@ -237,59 +296,13 @@ public abstract class CommonExecutor implements JdbcExecutor, SqlFragment {
             }
 
         }
-        int rows = statement.preparedBatchExecutor(sql.toString(), params);
+        int rows = statement.preparedBatchExecutor(sql.toString(), params, count);
         // 打印SQL语句
         logger.info("Executed SQL ===> "+sql.toString());
         return rows;
     }
 
-    /**
-     * 记录数统计执行器
-     * @param sql sql对象
-     * @return count 获取记录总数
-     */
-    private long sqlCountExecutor(Sql sql) {
-        List<Map<String, Object>> count =
-                statement.preparedSelectExecutor(sql.getSql().toString(),
-                        sql.getParams().toArray(new Object[]{}));
-        return (long) count.get(0).get("count(*)");
-    }
 
-    /**
-     * Sql执行返回结果映射执行器
-     * @param sql sql对象
-     * @param entityClass 实体类
-     * @param <T> t
-     * @return list
-     */
-    private <T> List<T> sqlResultExecutor(Sql sql, Class<T> entityClass) {
-        // 打印Sql语句
-        logger.info("Executed SQL ===> "+sql.getSql().toString());
-        // 执行查询
-        List<Map<String, Object>> maps =
-                statement.preparedSelectExecutor(sql.getSql().toString(),
-                        sql.getParams().toArray(new Object[]{}));
-        // 结果
-        List<T> result = new ArrayList<>(maps.size());
-
-        Map<String, String> columnNames = DataTableInfo.getColumnNames(entityClass);
-        maps.forEach(map -> {
-            try {
-                T t = entityClass.newInstance();
-                for (Map.Entry<String, Object> mapEntry : map.entrySet()) {
-                    String fieldName = columnNames.get(mapEntry.getKey());
-                    Field field = entityClass.getDeclaredField(fieldName);
-                    field.setAccessible(Boolean.TRUE);
-                    field.set(t, mapEntry.getValue());
-                }
-                result.add(t);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-        });
-        return result;
-    }
 }
 
 

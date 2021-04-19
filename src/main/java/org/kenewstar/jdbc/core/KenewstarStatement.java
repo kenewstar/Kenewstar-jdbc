@@ -89,9 +89,13 @@ public class KenewstarStatement {
      * 批量Sql执行器
      * @param sql sql语句
      * @param paramList 批量参数
+     * @param executeNum 每次执行数量
      * @return rows
      */
-    public int preparedBatchExecutor(String sql, List<List<Object>> paramList) {
+    public int preparedBatchExecutor(String sql, List<List<Object>> paramList, int executeNum) {
+        if (executeNum <= 0) {
+            executeNum = EXECUTOR_COUNT;
+        }
         PreparedStatement ps = null;
         // 获取一个连接
         Connection conn = getConnection();
@@ -107,13 +111,13 @@ public class KenewstarStatement {
                     ps.setObject(j, params.get(j - 1));
                 }
                 ps.addBatch();
-                if (i % EXECUTOR_COUNT == 0) {
+                if (i % executeNum == 0) {
                     ps.executeBatch();
                     ps.clearBatch();
                 }
             }
             // 执行剩余
-            if (count % EXECUTOR_COUNT != 0) {
+            if (count % executeNum != 0) {
                 ps.executeBatch();
                 ps.clearBatch();
             }

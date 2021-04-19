@@ -3,8 +3,7 @@ package com.kenewstar.multiple;
 import org.kenewstar.jdbc.annotation.Column;
 import org.kenewstar.jdbc.annotation.Id;
 import org.kenewstar.jdbc.annotation.Table;
-
-import java.util.UUID;
+import org.kenewstar.jdbc.core.base.BaseEntity;
 
 /**
  * @author xinke.huang@hand-china.com
@@ -12,7 +11,7 @@ import java.util.UUID;
  * @date 2021/4/1
  */
 @Table
-public class User {
+public class User extends BaseEntity {
     @Id
     @Column
     private Integer id;
@@ -76,16 +75,5 @@ public class User {
     }
     public User() {}
 
-    @Override
-    public String toString() {
-
-        return "User{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", age=" + age +
-                ", deptId=" + deptId +
-                ", companyId=" + companyId +
-                '}';
-    }
 
 }
