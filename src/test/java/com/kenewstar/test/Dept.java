@@ -3,6 +3,7 @@ package com.kenewstar.test;
 import org.kenewstar.jdbc.annotation.Column;
 import org.kenewstar.jdbc.annotation.Id;
 import org.kenewstar.jdbc.annotation.Table;
+import org.kenewstar.jdbc.core.base.BaseEntity;
 
 /**
  * @author xinke.huang@hand-china.com
@@ -10,7 +11,7 @@ import org.kenewstar.jdbc.annotation.Table;
  * @date 2021/4/6
  */
 @Table
-public class Dept {
+public class Dept extends BaseEntity {
     @Id
     @Column
     private Integer id;

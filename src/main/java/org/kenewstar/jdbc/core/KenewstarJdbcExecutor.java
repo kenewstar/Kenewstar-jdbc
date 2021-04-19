@@ -314,28 +314,28 @@ public class KenewstarJdbcExecutor extends CommonExecutor {
         }
         // 获取表名
         String tableName = KenewstarUtil.getTableName(entityClass);
-        // 获取属性名与列名的集合
-        Map<String, String> fieldNameAndColumnName = DataTableInfo.getFieldAndColumn(entityClass);
-        //===============构建SQL语句======================//
+
         // select * from tableName order by column1 desc|asc,[column2 desc|asc]...
         StringBuilder sql = new StringBuilder("select * from "+tableName+" order by ");
         // 遍历排序条件
         for (Sort sort : sorts){
             // 遍历排序条件
-            // 根据属性名获取列名
-            String columnName = fieldNameAndColumnName.get(sort.getFieldName());
             // 判断是升序或降序
             if (Objects.equals(sort.getOrder(),Sort.DESC)){
                 // 排序为降序
-                sql.append(columnName).append(" desc,");
+                sql.append(sort.getColumn())
+                   .append(SqlKeyWord.DESC)
+                   .append(SqlKeyWord.COMMA);
             }else {
                 // 升序
-                sql.append(columnName).append(" asc,");
+                sql.append(sort.getColumn())
+                   .append(SqlKeyWord.ASC)
+                   .append(SqlKeyWord.COMMA);
             }
 
         }
         // 去掉最后一个逗号
-        sql.setCharAt(sql.length()-1,' ');
+        sql.setCharAt(sql.length()-1,SqlKeyWord.BLANK_CHAR);
         // 执行SQL语句
         List<T> result = selectAllEntity(sql.toString(), entityClass);
         // 打印SQL语句

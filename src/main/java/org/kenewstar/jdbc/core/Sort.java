@@ -1,5 +1,8 @@
 package org.kenewstar.jdbc.core;
 
+import org.kenewstar.jdbc.function.FunctionColumn;
+import org.kenewstar.jdbc.util.FunctionUtil;
+
 /**
  * 排序参数类
  * @author kenewstar
@@ -9,63 +12,63 @@ package org.kenewstar.jdbc.core;
 public class Sort {
 
     /**
-     * 排序的属性名
+     * 排序的列名
      */
-    private String fieldName;
+    private String column;
     /**
      * 排序方式
      */
-    private KenewstarOrder order;
+    private Order order;
     /**
      * 降序
      */
-    public static final KenewstarOrder DESC = KenewstarOrder.DESC;
+    public static final Order DESC = Order.DESC;
     /**
      * 升序
      */
-    public static final KenewstarOrder ASC = KenewstarOrder.ASC;
+    public static final Order ASC = Order.ASC;
 
-    /**
-     * 无参构造
-     */
-    public Sort() {
+    private Sort() { }
+
+    private Sort(String column) {
+        this.column = column;
+    }
+    private Sort(String column, Order order) {
+        this.column = column;
+        this.order = order;
     }
 
-    /**
-     * 全参构造
-     * @param fieldName 属性名称
-     * @param order 排序方式(降序|升序)
-     */
-    public Sort(String fieldName, KenewstarOrder order) {
-        this.fieldName = fieldName;
-        this.order = order;
+    public static Sort buildSort() {
+        return new Sort();
+    }
+
+    public static <T, V> Sort buildSort(FunctionColumn<T, V> column) {
+        return new Sort(FunctionUtil.getColumnName(column));
+    }
+
+    public static <T, V> Sort buildSort(FunctionColumn<T, V> column, Order order) {
+        return new Sort(FunctionUtil.getColumnName(column), order);
     }
 
     /**
      * 排序方式枚举类
      * @author kenewstar
      */
-    private enum KenewstarOrder{
+    private enum Order {
         //降序,升序
         DESC, ASC;
 
     }
-
-    //=====getter&&setter============//
-
-    public String getFieldName() {
-        return fieldName;
+    public String getColumn() {
+        return column;
     }
 
-    public void setFieldName(String fieldName) {
-        this.fieldName = fieldName;
-    }
-
-    public KenewstarOrder getOrder() {
+    public Order getOrder() {
         return order;
     }
 
-    public void setOrder(KenewstarOrder order) {
+    public Sort setOrder(Order order) {
         this.order = order;
+        return this;
     }
 }
