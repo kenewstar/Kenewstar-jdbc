@@ -50,30 +50,31 @@ public class PageCondition {
         this.sorts = sorts;
     }
 
-    //========= getter && setter ===================//
-
     public Integer getPageSize() {
         return pageSize;
     }
 
-    public void setPageSize(Integer pageSize) {
+    public PageCondition setPageSize(Integer pageSize) {
         this.pageSize = pageSize;
+        return this;
     }
 
     public Integer getPageNumber() {
         return pageNumber;
     }
 
-    public void setPageNumber(Integer pageNumber) {
+    public PageCondition setPageNumber(Integer pageNumber) {
         this.pageNumber = pageNumber;
+        return this;
     }
 
     public List<Sort> getSort() {
         return sorts;
     }
 
-    public void setSort(List<Sort> sorts) {
+    public PageCondition setSort(List<Sort> sorts) {
         this.sorts = sorts;
+        return this;
     }
 
 }

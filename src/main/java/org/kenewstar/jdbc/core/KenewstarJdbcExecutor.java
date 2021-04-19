@@ -2,6 +2,7 @@ package org.kenewstar.jdbc.core;
 
 import org.kenewstar.jdbc.core.page.Page;
 import org.kenewstar.jdbc.core.page.PageCondition;
+import org.kenewstar.jdbc.core.sql.Sql;
 import org.kenewstar.jdbc.core.sql.SqlKeyWord;
 import org.kenewstar.jdbc.exception.PageNumberIllegalException;
 import org.kenewstar.jdbc.transaction.JdbcTransaction;
@@ -178,124 +179,38 @@ public class KenewstarJdbcExecutor extends CommonExecutor {
 
     @Override
     public int insert(Object entity) {
-        Class<?> entityClass = entity.getClass();
-        // 获取表名
-        String tableName = KenewstarUtil.getTableName(entityClass);
-        // 获取所有列名
-        Map<String, String> columnAndField =
-                DataTableInfo.getColumnAndField(entityClass);
-        // 获取传入对象的属性以及get方法
-        Field[] fields = entityClass.getDeclaredFields();
-        // 存放属性名与属性值，以方便取用
-        Map<String,Object> mapFields = new HashMap<>();
-        for (Field field:fields){
-            field.setAccessible(true);
-            try {
-                mapFields.put(field.getName(),field.get(entity));
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            }
-        }
+        Sql sql = buildInsertSqlFragment(entity);
+        // 获取插入Sql
+        StringBuilder insertSql = sql.getSql();
+        // 获取插入参数
+        List<Object> params = sql.getParams();
+        // 执行Sql
+        return statement.preparedUpdateExecutor(insertSql.toString(),
+                params.toArray(new Object[]{}));
 
-        // 声明参数数组,存储SQL所需参数
-        Object[] params = new Object[fields.length];
-
-        // insert into tableName(columnName,columnName) values(?,?)
-        //===============构建SQL语句===============//
-        StringBuilder sql = new StringBuilder("insert into " + tableName);
-        sql.append('(');
-        int index=0;
-        StringBuilder valSql = new StringBuilder(" values(");
-        for (String columnName : columnAndField.keySet()) {
-            sql.append(columnName).append(',');
-            //通过列名获取属性名进行属性的匹配，将匹配的属性的值放入参数数组中
-            params[index++] = mapFields.get(columnAndField.get(columnName));
-
-            valSql.append("?,");
-        }
-        valSql.setCharAt(valSql.length()-1,')');
-        sql.setCharAt(sql.length()-1,')');
-        sql.append(valSql);
-
-        // 执行SQL
-        int insert = insertEntity(sql.toString(), params);
-        // 打印SQL语句
-        log.info("Executed SQL ===> "+sql.toString());
-        // 返回影响行数
-        return insert;
     }
 
 
     @Override
     public int deleteById(Integer id, Class<?> entityClass){
-        // 获取表名
-        String tableName = KenewstarUtil.getTableName(entityClass);
-        // 获取表的id
-        String idName = DataTableInfo.getIdName(entityClass);
-        //============构建SQL语句=================//
-        // example : delete from tableName where id = ?
-        StringBuilder sql = new StringBuilder("delete from " + tableName);
-        sql.append(" where ").append(idName).append(" = ?");
-        //======================================//
-        // 执行SQL语句
-        int delete = deleteEntity(sql.toString(), id);
-        // 打印SQL语句
-        log.info("Executed SQL ===> "+sql.toString());
-        // 返回影响的行数
-        return delete;
+        Sql sql = buildDeleteSqlFragment(entityClass);
+        // 获取插入Sql
+        StringBuilder deleteSql = sql.getSql();
+        // 执行Sql
+        return statement.preparedUpdateExecutor(deleteSql.toString(), id);
     }
 
 
     @Override
     public int updateById(Object entity){
-        Class<?> entityClass = entity.getClass();
-        // 获取表名
-        String tableName = KenewstarUtil.getTableName(entityClass);
-        // 获取id名
-        String idName = DataTableInfo.getIdName(entityClass);
-        // 获取所有列名
-        Map<String, String> columnAndField = DataTableInfo.getColumnAndField(entityClass);
-        // 存放SQL所需参数
-        Object[] params = new Object[columnAndField.size()];
-        // 获取所有属性
-        Field[] fields = entityClass.getDeclaredFields();
-        // 存放属性名与属性值，以方便取用
-        Map<String,Object> mapFields = new HashMap<>();
-        for (Field field:fields){
-            field.setAccessible(true);
-            try {
-                mapFields.put(field.getName(),field.get(entity));
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            }
-        }
-        //===============构建SQL语句并加入参数====================//
-        // example : update tableName set columnName=?,columnName=? where id=?
-        StringBuilder sql = new StringBuilder("update " + tableName + " set ");
-        // 遍历所有列名
-        int index = 0;
-        for (String columnName:columnAndField.keySet()) {
-            // 判断该列是否是id
-            if (columnName.equals(idName)) {
-                // 列名中有一个是id名
-                params[columnAndField.size() - 1] = mapFields.get(columnAndField.get(columnName));
-            }else {
-                sql.append(columnName).append("=?,");
-                // 列名不是id名
-                params[index++]=mapFields.get(columnAndField.get(columnName));
-            }
-        }
-        System.out.println(Arrays.toString(params));
-        // 去除最后一个逗号
-        sql.setCharAt(sql.length()-1,' ');
-        // 连接id查询条件
-        sql.append("where ").append(idName).append("=?");
-        // 执行SQL语句
-        int update = updateEntity(sql.toString(),params);
-        // 打印SQL语句
-        log.info("Executed SQL ===> "+sql.toString());
-        // 返回影响的行数
-        return update;
+        Sql sql = buildUpdateSqlFragment(entity);
+        // 获取Sql语句
+        StringBuilder updateSql = sql.getSql();
+        // 获取参数
+        List<Object> params = sql.getParams();
+        // 执行Sql
+        return statement.preparedUpdateExecutor(updateSql.toString(),
+                params.toArray(new Object[]{}));
     }
 
 
@@ -338,25 +253,14 @@ public class KenewstarJdbcExecutor extends CommonExecutor {
 
     @Override
     public long count(Class<?> entityClass){
-        // 获取表名与id名
-        String tableName = KenewstarUtil.getTableName(entityClass);
-        String idName = DataTableInfo.getIdName(entityClass);
-
-        // 构建SQL
-        String sql = "select count(" + idName + ") count from " + tableName;
-
-        // 执行SQL
-        List<Map<String, Object>> maps = statement.preparedSelectExecutor(sql);
-
-        // 打印SQL语句
-        log.info("Executed SQL ===> "+sql);
-        // 获取数量
-        if (maps.size() == 0) {
-             return 0;
-        } else {
-             return (long) maps.get(0).get("count");
-        }
-
+        Sql sql = buildCountSqlFragment(entityClass);
+        // 获取Sql语句
+        StringBuilder countSql = sql.getSql();
+        // 执行
+        List<Map<String, Object>> maps =
+                statement.preparedSelectExecutor(countSql.toString());
+        // 返回计数结果
+        return (long) maps.get(0).get("count(*)");
     }
 
 

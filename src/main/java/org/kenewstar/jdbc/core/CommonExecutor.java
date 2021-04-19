@@ -197,18 +197,9 @@ public abstract class CommonExecutor implements JdbcExecutor, SqlFragment {
     @Override
     public int batchDelete(Class<?> entityClass, List<?> ids) {
         Assert.notNull(ids);
-        // 获取表名
-        String tableName = KenewstarUtil.getTableName(entityClass);
-        // 获取id名
-        String idName = DataTableInfo.getIdName(entityClass);
-        int rows;
-        StringBuilder sql = new StringBuilder(SqlKeyWord.DELETE);
-        sql.append(SqlKeyWord.FROM)
-           .append(tableName)
-           .append(SqlKeyWord.WHERE)
-           .append(idName)
-           .append(SqlKeyWord.EQ)
-           .append(SqlKeyWord.PLACEHOLDER);
+        // 构建删除Sql语句
+        Sql sql = buildDeleteSqlFragment(entityClass);
+        StringBuilder deleteSql = sql.getSql();
         // 组装参数
         List<List<Object>> paramList = new ArrayList<>(ids.size());
         for (Object id : ids) {
@@ -216,11 +207,10 @@ public abstract class CommonExecutor implements JdbcExecutor, SqlFragment {
             params.add(id);
             paramList.add(params);
         }
-        // 执行结果
-        rows = statement.preparedBatchExecutor(sql.toString(), paramList, 0);
         // 打印SQL语句
-        logger.info("Executed SQL ===> "+sql.toString());
-        return rows;
+        logger.info("Executed SQL ===> " + deleteSql.toString());
+        // 执行结果
+        return statement.preparedBatchExecutor(deleteSql.toString(), paramList, 0);
     }
 
 

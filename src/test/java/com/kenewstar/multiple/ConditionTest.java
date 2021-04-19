@@ -9,6 +9,8 @@ import org.kenewstar.jdbc.core.KenewstarJdbcExecutor;
 import org.kenewstar.jdbc.core.factory.JdbcExecutorFactory;
 import org.kenewstar.jdbc.core.page.Page;
 import org.kenewstar.jdbc.core.page.PageCondition;
+import org.kenewstar.jdbc.core.sql.Sql;
+import org.kenewstar.jdbc.core.sql.SqlFragment;
 import org.kenewstar.jdbc.util.KenewstarUtil;
 
 import java.util.List;
@@ -99,13 +101,25 @@ public class ConditionTest {
 
     @Test
     public void test5() {
-        PageCondition condition = new PageCondition();
-        condition.setPageNumber(1);
-        condition.setPageSize(10);
         Page<User> users = executor.selectList(User.class, sql -> {
             sql.where().eq(User::getAge,0);
-        }, condition);
+        }, new PageCondition()
+                .setPageNumber(1)
+                .setPageSize(10));
         System.out.println(users);
+    }
+
+    @Test
+    public void test6() {
+        SqlFragment fragment = new KenewstarJdbcExecutor();
+        Sql sql = fragment.buildInsertSqlFragment(new User(null, "aa", 23));
+        System.out.println(sql);
+    }
+
+    @Test
+    public void test7() {
+        long count = executor.count(User.class);
+        System.out.println(count);
     }
 
 }

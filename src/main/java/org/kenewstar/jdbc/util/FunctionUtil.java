@@ -59,7 +59,7 @@ public class FunctionUtil {
         String className = implClass.replace('/', '.');
         try {
             Class<?> clz = Class.forName(className);
-            tableName = DataTableInfo.getTableName(clz);
+            tableName = KenewstarUtil.getTableName(clz);
             Field field = clz.getDeclaredField(simpleName);
             simpleName = DataTableInfo.getColumnNameByField(field);
         } catch (Exception e) {

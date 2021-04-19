@@ -37,7 +37,7 @@ public interface SqlFragment {
         Class<?> entityClass = entity.getClass();
         // 获取id
         String idName = DataTableInfo.getIdName(entityClass);
-        Map<String, String> fieldAndColumn = DataTableInfo.getFieldNameAndColumnName(entityClass);
+        Map<String, String> fieldAndColumn = DataTableInfo.getFieldAndColumn(entityClass);
         // 获取所有属性
         Field[] fields = entityClass.getDeclaredFields();
         // 组装Sql与参数
@@ -78,6 +78,78 @@ public interface SqlFragment {
     }
 
     /**
+     * <p> 构建对象属性不为null的属性作为插入对象 </p>
+     * <p> insert into tableName(columnName, ...) values(?, ...) </p>
+     * @param entity 实体类对象
+     * @return Sql对象
+     */
+    default Sql buildInsertSqlFragment(Object entity) {
+        Sql sql = SqlFactory.getSql();
+        StringBuilder insertSql = sql.getSql();
+        List<Object> insertParams = sql.getParams();
+
+        Class<?> entityClass = entity.getClass();
+        Field[] fields = entityClass.getDeclaredFields();
+        String tableName = KenewstarUtil.getTableName(entityClass);
+        Map<String, String> fieldAndColumn = DataTableInfo.getFieldAndColumn(entityClass);
+
+        insertSql.append(SqlKeyWord.INSERT)
+                 .append(SqlKeyWord.INTO)
+                 .append(tableName)
+                 .append(SqlKeyWord.LEFT_BRACKETS);
+        StringBuilder valueSql = new StringBuilder(SqlKeyWord.VALUES);
+        valueSql.append(SqlKeyWord.LEFT_BRACKETS);
+
+        try {
+            for (Field field : fields) {
+                field.setAccessible(true);
+                Object value = field.get(entity);
+                if (Objects.nonNull(value)) {
+                    insertSql.append(fieldAndColumn.get(field.getName()))
+                             .append(SqlKeyWord.COMMA);
+                    valueSql.append(SqlKeyWord.PLACEHOLDER)
+                            .append(SqlKeyWord.COMMA);
+                    insertParams.add(value);
+                }
+            }
+            insertSql.setCharAt(insertSql.length() - 1, SqlKeyWord.RIGHT_BRACKETS_CHAR);
+            valueSql.setCharAt(valueSql.length() - 1, SqlKeyWord.RIGHT_BRACKETS_CHAR);
+            insertSql.append(valueSql);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        LOGGER.info("Execute Sql ===> " + sql.getSql().toString());
+        return sql;
+    }
+
+    /**
+     * <p>构建 delete sql 不包含参数</p>
+     * <p> delete from tableName where idName = ? </p>
+     * @param entityClass 实体类类型
+     * @return Sql对象
+     */
+    default Sql buildDeleteSqlFragment(Class<?> entityClass) {
+        Sql sql = SqlFactory.getSql();
+        StringBuilder deleteSql = sql.getSql();
+        // 获取表名
+        String tableName = KenewstarUtil.getTableName(entityClass);
+        // 获取id名
+        String idName = DataTableInfo.getIdName(entityClass);
+        deleteSql.append(SqlKeyWord.DELETE)
+                 .append(SqlKeyWord.FROM)
+                 .append(tableName)
+                 .append(SqlKeyWord.WHERE)
+                 .append(idName)
+                 .append(SqlKeyWord.EQ)
+                 .append(SqlKeyWord.PLACEHOLDER);
+
+        LOGGER.info("Execute Sql ===> " + sql.getSql().toString());
+        // 返回Sql对象
+        return sql;
+    }
+
+    /**
      * 构建 select sql 片段
      * @param entityClass 实体类
      * @return Sql对象
@@ -85,8 +157,8 @@ public interface SqlFragment {
     default Sql buildSelectSqlFragment(Class<?> entityClass) {
         Sql sql = SqlFactory.getSql();
         // 获取表名
-        String tableName = DataTableInfo.getTableName(entityClass);
-        Map<String, String> columnNames = DataTableInfo.getColumnNames(entityClass);
+        String tableName = KenewstarUtil.getTableName(entityClass);
+        Map<String, String> columnNames = DataTableInfo.getColumnAndField(entityClass);
         // 组装sql
         sql.getSql().append(SqlKeyWord.SELECT);
         for (String columnName : columnNames.keySet()) {
@@ -108,7 +180,7 @@ public interface SqlFragment {
     default Sql buildCountSqlFragment(Class<?> entityClass) {
         Sql sql = SqlFactory.getSql();
         // 获取表名
-        String tableName = DataTableInfo.getTableName(entityClass);
+        String tableName = KenewstarUtil.getTableName(entityClass);
         sql.getSql()
                 .append(SqlKeyWord.SELECT)
                 .append(SqlKeyWord.COUNT)
