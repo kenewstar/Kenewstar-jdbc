@@ -25,18 +25,42 @@ public class KenewstarJdbcExecutor extends CommonExecutor {
 
     private static final Logger log = Logger.getLogger("jdbcExecutor");
 
-    public KenewstarJdbcExecutor() {
+    private volatile static JdbcExecutor jdbcExecutor;
+
+    private KenewstarJdbcExecutor() {
         super();
     }
 
-    public KenewstarJdbcExecutor(String configPath) {
+    private KenewstarJdbcExecutor(String configPath) {
         super(configPath);
+    }
+
+    /**
+     * JdbcExecutor对象
+     * @param configPath 配置文件地址
+     * @return KenewstarJdbcExecutor
+     */
+    public static JdbcExecutor getInstance(String configPath) {
+        if (jdbcExecutor == null) {
+            synchronized (KenewstarJdbcExecutor.class) {
+                if (jdbcExecutor == null) {
+                    if (Objects.isNull(configPath)) {
+                        jdbcExecutor = new KenewstarJdbcExecutor();
+                    } else {
+                        jdbcExecutor = new KenewstarJdbcExecutor(configPath);
+                    }
+                }
+
+            }
+
+        }
+        return jdbcExecutor;
     }
 
     /**
      * 将查询出来的Map<columnName,columnValue>映射转换为
      * Map<fieldName,fieldValue>映射
-     * @param maps 列名与列值银蛇
+     * @param maps 列名与列值映射
      * @return 返回属性名与属性值映射
      */
     private List<Map<String,Object>> getFieldNameAndValues(List<Map<String, Object>> maps, Class<?> entityClass) {
