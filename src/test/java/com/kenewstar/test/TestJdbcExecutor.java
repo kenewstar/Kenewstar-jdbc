@@ -5,6 +5,7 @@ import org.junit.Test;
 import org.kenewstar.jdbc.core.JdbcExecutor;
 import org.kenewstar.jdbc.core.KenewstarJdbcExecutor;
 import org.kenewstar.jdbc.core.KenewstarStatement;
+import org.kenewstar.jdbc.core.factory.JdbcExecutorFactory;
 import org.kenewstar.jdbc.transaction.JdbcTransaction;
 import org.kenewstar.jdbc.transaction.Transaction;
 
@@ -17,7 +18,7 @@ public class TestJdbcExecutor {
     private JdbcExecutor jdbcExecutor;
     @Before
     public void init(){
-        jdbcExecutor = new KenewstarJdbcExecutor();
+        jdbcExecutor = JdbcExecutorFactory.getExecutor();
     }
 
     /**

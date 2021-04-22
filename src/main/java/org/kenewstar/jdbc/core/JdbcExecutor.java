@@ -1,15 +1,12 @@
 package org.kenewstar.jdbc.core;
 
-import org.kenewstar.jdbc.core.factory.SqlFactory;
 import org.kenewstar.jdbc.core.page.Page;
 import org.kenewstar.jdbc.core.page.PageCondition;
-import org.kenewstar.jdbc.core.sql.Sql;
-import org.kenewstar.jdbc.core.sql.SqlKeyWord;
+import org.kenewstar.jdbc.function.MapTo;
 import org.kenewstar.jdbc.transaction.Transaction;
-import org.kenewstar.jdbc.util.DataTableInfo;
 
 import java.util.List;
-import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * Jdbc执行器接口
@@ -19,6 +16,7 @@ import java.util.Map;
  */
 public interface JdbcExecutor extends ConditionJdbcExecutor, BatchExecutor {
 
+    Logger LOG = Logger.getLogger("JdbcExecutor");
 
     /**
      * 获取事务
@@ -126,10 +124,10 @@ public interface JdbcExecutor extends ConditionJdbcExecutor, BatchExecutor {
      * 根据条件统计记录数
      * 实体对象中不为空的属性将作为查询条件
      * 条件为 and 查询
-     * @param entity 实体对象
+     * @param entityClass 实体类
      * @return 返回数据记录数
      */
-    long count(Object entity);
+    long count(Class<?> entityClass, MapTo mapTo);
 
 
     /**
@@ -143,7 +141,7 @@ public interface JdbcExecutor extends ConditionJdbcExecutor, BatchExecutor {
      * @param sorts 排序条件集合
      * @return 返回查询结果集合
      */
-    <T> List<T> selectAll(Class<T> entityClass, List<Sort> sorts);
+    <T> List<T> selectAll(Class<T> entityClass, SortList sorts);
 
 
     /**
@@ -155,24 +153,6 @@ public interface JdbcExecutor extends ConditionJdbcExecutor, BatchExecutor {
      * @return 返回分页查询结果
      */
     <T> Page<T> selectAll(Class<T> entityClass, PageCondition condition);
-
-
-
-
-    /**
-     * 根据主键更新
-     * entity对象属性不为空的字段进行更新
-     * @param entity 更新属性
-     * @return 1
-     */
-    int updateByIdSelective(Object entity);
-
-    /**
-     * 可选插入
-     * @param entity 插入对象
-     * @return row
-     */
-    int insertSelective(Object entity);
 
 
 

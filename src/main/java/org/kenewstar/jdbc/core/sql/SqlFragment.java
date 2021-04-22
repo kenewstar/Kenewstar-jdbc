@@ -1,5 +1,6 @@
 package org.kenewstar.jdbc.core.sql;
 
+import org.kenewstar.jdbc.core.SortList;
 import org.kenewstar.jdbc.core.factory.SqlFactory;
 import org.kenewstar.jdbc.util.DataTableInfo;
 import org.kenewstar.jdbc.util.KenewstarUtil;
@@ -17,10 +18,13 @@ import java.util.logging.Logger;
  * @date 2021/4/18
  */
 public interface SqlFragment {
-    /**
-     * jul日志对象
-     */
+
+    char BLANK_CHAR = ' ';
+
+    String EXECUTED_SQL = "Execute Sql ===> ";
+
     Logger LOGGER = Logger.getLogger("SqlFragment");
+
     /**
      * <p>构建更新Sql对象
      * 只构建对象属性值不为null的属性</p>
@@ -42,9 +46,10 @@ public interface SqlFragment {
         Field[] fields = entityClass.getDeclaredFields();
         // 组装Sql与参数
         updateSql.append(SqlKeyWord.UPDATE)
-                 .append(SqlKeyWord.SET)
+                 .append(BLANK_CHAR)
                  .append(KenewstarUtil.getTableName(entityClass))
-                 .append(SqlKeyWord.BLANK);
+                 .append(BLANK_CHAR)
+                 .append(SqlKeyWord.SET);
         try {
             Object idValue = null;
             for (Field field : fields) {
@@ -57,15 +62,17 @@ public interface SqlFragment {
                 }
                 if (Objects.nonNull(value) &&
                     !Objects.equals(fieldAndColumn.get(field.getName()), idName)) {
-                    updateSql.append(fieldAndColumn.get(field.getName()))
+                    updateSql.append(BLANK_CHAR)
+                             .append(fieldAndColumn.get(field.getName()))
                              .append(SqlKeyWord.EQ)
                              .append(SqlKeyWord.PLACEHOLDER)
                              .append(SqlKeyWord.COMMA);
                     updateParams.add(value);
                 }
             }
-            updateSql.setCharAt(updateSql.length() - 1, SqlKeyWord.BLANK_CHAR);
+            updateSql.setCharAt(updateSql.length() - 1, BLANK_CHAR);
             updateSql.append(SqlKeyWord.WHERE)
+                     .append(BLANK_CHAR)
                      .append(idName)
                      .append(SqlKeyWord.EQ)
                      .append(SqlKeyWord.PLACEHOLDER);
@@ -73,7 +80,7 @@ public interface SqlFragment {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        LOGGER.info("Execute Sql ===> " + sql.getSql().toString());
+        LOGGER.info(EXECUTED_SQL + sql.getSql().toString());
         return sql;
     }
 
@@ -94,9 +101,12 @@ public interface SqlFragment {
         Map<String, String> fieldAndColumn = DataTableInfo.getFieldAndColumn(entityClass);
 
         insertSql.append(SqlKeyWord.INSERT)
+                 .append(BLANK_CHAR)
                  .append(SqlKeyWord.INTO)
+                 .append(BLANK_CHAR)
                  .append(tableName)
                  .append(SqlKeyWord.LEFT_BRACKETS);
+
         StringBuilder valueSql = new StringBuilder(SqlKeyWord.VALUES);
         valueSql.append(SqlKeyWord.LEFT_BRACKETS);
 
@@ -113,13 +123,14 @@ public interface SqlFragment {
                 }
             }
             insertSql.setCharAt(insertSql.length() - 1, SqlKeyWord.RIGHT_BRACKETS_CHAR);
+            insertSql.append(BLANK_CHAR);
             valueSql.setCharAt(valueSql.length() - 1, SqlKeyWord.RIGHT_BRACKETS_CHAR);
             insertSql.append(valueSql);
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-        LOGGER.info("Execute Sql ===> " + sql.getSql().toString());
+        LOGGER.info(EXECUTED_SQL + sql.getSql().toString());
         return sql;
     }
 
@@ -137,14 +148,18 @@ public interface SqlFragment {
         // 获取id名
         String idName = DataTableInfo.getIdName(entityClass);
         deleteSql.append(SqlKeyWord.DELETE)
+                 .append(BLANK_CHAR)
                  .append(SqlKeyWord.FROM)
+                 .append(BLANK_CHAR)
                  .append(tableName)
+                 .append(BLANK_CHAR)
                  .append(SqlKeyWord.WHERE)
+                 .append(BLANK_CHAR)
                  .append(idName)
                  .append(SqlKeyWord.EQ)
                  .append(SqlKeyWord.PLACEHOLDER);
 
-        LOGGER.info("Execute Sql ===> " + sql.getSql().toString());
+        LOGGER.info(EXECUTED_SQL + sql.getSql().toString());
         // 返回Sql对象
         return sql;
     }
@@ -160,14 +175,17 @@ public interface SqlFragment {
         String tableName = KenewstarUtil.getTableName(entityClass);
         Map<String, String> columnNames = DataTableInfo.getColumnAndField(entityClass);
         // 组装sql
-        sql.getSql().append(SqlKeyWord.SELECT);
+        sql.getSql().append(SqlKeyWord.SELECT)
+                    .append(BLANK_CHAR);
         for (String columnName : columnNames.keySet()) {
             sql.getSql().append(columnName)
                     .append(SqlKeyWord.COMMA);
         }
-        sql.getSql().setCharAt(sql.getSql().length() - 1, SqlKeyWord.BLANK_CHAR);
+        sql.getSql().setCharAt(sql.getSql().length() - 1, BLANK_CHAR);
         sql.getSql().append(SqlKeyWord.FROM)
-                .append(tableName);
+                    .append(BLANK_CHAR)
+                    .append(tableName)
+                    .append(BLANK_CHAR);
         // 返回sql对象
         return sql;
     }
@@ -183,9 +201,14 @@ public interface SqlFragment {
         String tableName = KenewstarUtil.getTableName(entityClass);
         sql.getSql()
                 .append(SqlKeyWord.SELECT)
+                .append(BLANK_CHAR)
                 .append(SqlKeyWord.COUNT)
+                .append(BLANK_CHAR)
                 .append(SqlKeyWord.FROM)
-                .append(tableName);
+                .append(BLANK_CHAR)
+                .append(tableName)
+                .append(BLANK_CHAR);
+        LOGGER.info(EXECUTED_SQL + sql.getSql().toString());
         return sql;
     }
 
@@ -206,6 +229,42 @@ public interface SqlFragment {
         long index = (pageNum - 1) * pageSize;
         sql.getParams().add(index);
         sql.getParams().add(pageSize);
+    }
+
+    /**
+     * 构建排序子句
+     * @param sortList 排序信息
+     * @return 子句Sql对象
+     */
+    default Sql buildOrderBySqlFragment(SortList sortList) {
+
+        Sql sql = SqlFactory.getSql();
+
+        StringBuilder orderBy = sql.getSql();
+
+        orderBy.append(SqlKeyWord.ORDER_BY);
+
+        // 获取排序信息
+        List<SortList.Sort> sorts = sortList.getSortList();
+        sorts.forEach(sort -> {
+            if (Objects.equals(sort.getOrder(), SortList.Order.ASC)) {
+                orderBy.append(SqlKeyWord.BLANK_CHAR)
+                       .append(sort.getColumn())
+                       .append(SqlKeyWord.BLANK_CHAR)
+                       .append(SqlKeyWord.ASC)
+                       .append(SqlKeyWord.COMMA);
+            } else {
+                orderBy.append(SqlKeyWord.BLANK_CHAR)
+                       .append(sort.getColumn())
+                       .append(SqlKeyWord.BLANK_CHAR)
+                       .append(SqlKeyWord.DESC)
+                       .append(SqlKeyWord.COMMA);
+            }
+        });
+
+        orderBy.setCharAt(orderBy.length() - 1, SqlKeyWord.BLANK_CHAR);
+
+        return sql;
     }
 
 }

@@ -41,7 +41,7 @@ public abstract class CommonExecutor implements JdbcExecutor, SqlFragment {
      * @param resultType 返回类型
      * @return sql
      */
-    private StringBuilder resultType(Class<?> resultType) {
+    protected StringBuilder resultType(Class<?> resultType) {
         StringBuilder sql = new StringBuilder(SqlKeyWord.SELECT);
         // 获取所有属性
         Field[] fields = resultType.getDeclaredFields();
@@ -75,11 +75,11 @@ public abstract class CommonExecutor implements JdbcExecutor, SqlFragment {
      * @param sql sql对象
      * @return count 获取记录总数
      */
-    private long sqlCountExecutor(Sql sql) {
+    protected long sqlCountExecutor(Sql sql) {
         List<Map<String, Object>> count =
                 statement.preparedSelectExecutor(sql.getSql().toString(),
                         sql.getParams().toArray(new Object[]{}));
-        return (long) count.get(0).get("count(*)");
+        return (long) count.get(0).get(SqlKeyWord.COUNT);
     }
 
     /**
@@ -89,7 +89,7 @@ public abstract class CommonExecutor implements JdbcExecutor, SqlFragment {
      * @param <T> t
      * @return list
      */
-    private <T> List<T> sqlResultExecutor(Sql sql, Class<T> entityClass) {
+    protected  <T> List<T> sqlResultExecutor(Sql sql, Class<T> entityClass) {
         // 打印Sql语句
         logger.info("Executed SQL ===> "+sql.getSql().toString());
         // 执行查询

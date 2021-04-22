@@ -58,7 +58,7 @@ public final class Sql {
         sql.append(columnName)
            .append(SqlKeyWord.EQ)
            .append(otherName)
-           .append(SqlKeyWord.BLANK);
+           .append(SqlKeyWord.BLANK_CHAR);
         return this;
     }
 
@@ -610,7 +610,7 @@ public final class Sql {
      * @return this
      */
     public Sql and() {
-        sql.append(SqlKeyWord.AND);
+        sql.append(SqlKeyWord.AND).append(SqlKeyWord.BLANK_CHAR);
         return this;
     }
 
@@ -619,7 +619,7 @@ public final class Sql {
      * @return this
      */
     public Sql or() {
-        sql.append(SqlKeyWord.OR);
+        sql.append(SqlKeyWord.OR).append(SqlKeyWord.BLANK_CHAR);
         return this;
     }
 
@@ -630,7 +630,9 @@ public final class Sql {
      */
     public Sql leftJoin(Class<?> joinClass) {
         sql.append(SqlKeyWord.LEFT_JOIN)
+           .append(SqlKeyWord.BLANK_CHAR)
            .append(KenewstarUtil.getTableName(joinClass))
+           .append(SqlKeyWord.BLANK_CHAR)
            .append(SqlKeyWord.ON);
         return this;
     }

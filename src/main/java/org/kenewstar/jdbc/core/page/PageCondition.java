@@ -1,6 +1,6 @@
 package org.kenewstar.jdbc.core.page;
 
-import org.kenewstar.jdbc.core.Sort;
+import org.kenewstar.jdbc.core.SortList;
 
 import java.util.List;
 
@@ -23,7 +23,7 @@ public class PageCondition {
     /**
      * 封装排序条件
      */
-    private List<Sort> sorts;
+    private SortList sorts;
 
     /**
      * 无参构造
@@ -44,7 +44,7 @@ public class PageCondition {
      * @param pageNumber 页码大小
      * @param sorts 排序参数
      */
-    public PageCondition(Integer pageSize, Integer pageNumber, List<Sort> sorts) {
+    public PageCondition(Integer pageSize, Integer pageNumber, SortList sorts) {
         this.pageSize = pageSize;
         this.pageNumber = pageNumber;
         this.sorts = sorts;
@@ -68,11 +68,11 @@ public class PageCondition {
         return this;
     }
 
-    public List<Sort> getSort() {
+    public SortList getSort() {
         return sorts;
     }
 
-    public PageCondition setSort(List<Sort> sorts) {
+    public PageCondition setSort(SortList sorts) {
         this.sorts = sorts;
         return this;
     }

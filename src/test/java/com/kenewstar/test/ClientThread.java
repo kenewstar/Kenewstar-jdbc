@@ -2,6 +2,7 @@ package com.kenewstar.test;
 
 import org.kenewstar.jdbc.core.JdbcExecutor;
 import org.kenewstar.jdbc.core.KenewstarJdbcExecutor;
+import org.kenewstar.jdbc.core.factory.JdbcExecutorFactory;
 
 /**
  * @author kenewstar
@@ -25,7 +26,7 @@ public class ClientThread extends Thread{
     public static void main(String[] args) {
 
         for (int i=0;i<10;i++){
-            ClientThread thread = new ClientThread(new KenewstarJdbcExecutor());
+            ClientThread thread = new ClientThread(JdbcExecutorFactory.getExecutor());
             thread.start();
         }
     }

@@ -111,9 +111,7 @@ public class ConditionTest {
 
     @Test
     public void test6() {
-        SqlFragment fragment = new KenewstarJdbcExecutor();
-        Sql sql = fragment.buildInsertSqlFragment(new User(null, "aa", 23));
-        System.out.println(sql);
+
     }
 
     @Test
