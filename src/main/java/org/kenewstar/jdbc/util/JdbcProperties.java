@@ -34,9 +34,10 @@ public class JdbcProperties {
         InputStream is;
         try {
             //读取properties文件
-            is = ClassLoader.getSystemResourceAsStream(path);
+            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+            is = classLoader.getResourceAsStream(path);
             //path路径下找不到该文件，则is为null,加载输入流时会报NPE
-            if (is==null){
+            if (is == null){
                 //抛出为找到异常
                 throw new PropertiesFileNotFoundException(
                         "properties file not found,path: "+path);
